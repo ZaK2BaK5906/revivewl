@@ -1,10 +1,12 @@
 import { useState } from 'react';
-import { ArrowLeft, ArrowRight, CheckCircle, User, Tag, FileText, Save } from 'lucide-react';
+import { ArrowLeft, ArrowRight, CheckCircle, User, Tag, FileText, Save, AlertTriangle } from 'lucide-react';
+import toast from 'react-hot-toast';
 
 type Step = 1 | 2 | 3 | 4 | 5;
 
 const WhitelistNew = () => {
   const [currentStep, setCurrentStep] = useState<Step>(1);
+  const [ageBlocked, setAgeBlocked] = useState(false);
   const [formData, setFormData] = useState({
     // Étape 1 - Infos candidat
     firstname: '',
@@ -42,6 +44,16 @@ const WhitelistNew = () => {
   ];
 
   const handleNext = () => {
+    // Check age validation on step 1
+    if (currentStep === 1) {
+      const age = parseInt(formData.age);
+      if (age < 18) {
+        setAgeBlocked(true);
+        toast.error('Le candidat doit avoir au moins 18 ans pour être accepté sur le serveur.');
+        return;
+      }
+    }
+
     if (currentStep < 5) {
       setCurrentStep((currentStep + 1) as Step);
     }
@@ -118,12 +130,33 @@ const WhitelistNew = () => {
                 <input
                   type="number"
                   value={formData.age}
-                  onChange={(e) => setFormData({ ...formData, age: e.target.value })}
-                  className="w-full px-4 py-3 bg-background border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all text-foreground placeholder:text-muted-foreground"
+                  onChange={(e) => {
+                    const age = parseInt(e.target.value);
+                    setFormData({ ...formData, age: e.target.value });
+                    if (age < 18 && age > 0) {
+                      setAgeBlocked(true);
+                    } else {
+                      setAgeBlocked(false);
+                    }
+                  }}
+                  className={`w-full px-4 py-3 bg-background border rounded-lg focus:ring-2 focus:border-transparent transition-all text-foreground placeholder:text-muted-foreground ${
+                    ageBlocked ? 'border-red-500 focus:ring-red-500' : 'border-border focus:ring-primary'
+                  }`}
                   placeholder="18"
-                  min="18"
+                  min="1"
                   required
                 />
+                {ageBlocked && (
+                  <div className="mt-2 flex items-start gap-2 p-3 bg-red-500/10 border border-red-500/20 rounded-lg">
+                    <AlertTriangle className="w-5 h-5 text-red-500 mt-0.5 flex-shrink-0" />
+                    <div>
+                      <p className="text-sm font-semibold text-red-500">Candidat mineur détecté</p>
+                      <p className="text-xs text-red-400 mt-1">
+                        Les candidats de moins de 18 ans sont automatiquement refusés. Cette whitelist sera automatiquement marquée comme <strong>REFUSÉE</strong> pour raisons légales.
+                      </p>
+                    </div>
+                  </div>
+                )}
               </div>
               <div>
                 <label className="block text-sm font-medium text-foreground mb-2">

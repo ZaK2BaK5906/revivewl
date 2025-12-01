@@ -33,10 +33,11 @@ export const login = async (req: Request, res: Response): Promise<void> => {
 
     // If 2FA is enabled, return temporary token
     if (admin.two_fa_enabled) {
+      const jwtSecret = process.env.JWT_SECRET || 'secret';
       const tempToken = jwt.sign(
         { id: admin.id, temp: true },
-        process.env.JWT_SECRET || 'secret',
-        { expiresIn: '5m' }
+        jwtSecret,
+        { expiresIn: '5m' } as jwt.SignOptions
       );
 
       res.json({
@@ -50,10 +51,11 @@ export const login = async (req: Request, res: Response): Promise<void> => {
     await admin.update({ last_login: new Date() });
 
     // Generate JWT
+    const jwtSecret = process.env.JWT_SECRET || 'secret';
     const token = jwt.sign(
       { id: admin.id, username: admin.username },
-      process.env.JWT_SECRET || 'secret',
-      { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
+      jwtSecret,
+      { expiresIn: process.env.JWT_EXPIRES_IN || '7d' } as jwt.SignOptions
     );
 
     res.json({
@@ -113,10 +115,11 @@ export const verify2FA = async (req: Request, res: Response): Promise<void> => {
     await admin.update({ last_login: new Date() });
 
     // Generate JWT
+    const jwtSecret = process.env.JWT_SECRET || 'secret';
     const token = jwt.sign(
       { id: admin.id, username: admin.username },
-      process.env.JWT_SECRET || 'secret',
-      { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
+      jwtSecret,
+      { expiresIn: process.env.JWT_EXPIRES_IN || '7d' } as jwt.SignOptions
     );
 
     res.json({
@@ -197,7 +200,7 @@ export const disable2FA = async (req: AuthRequest, res: Response): Promise<void>
   }
 };
 
-export const logout = async (req: AuthRequest, res: Response): Promise<void> => {
+export const logout = async (_req: AuthRequest, res: Response): Promise<void> => {
   // In a real app, you might want to blacklist the token
   res.json({ message: 'Logged out successfully' });
 };

@@ -18,6 +18,7 @@ interface Scenario {
   id: number;
   title: string;
   description: string;
+  expectedAnswer: string;
   category: 'Legal' | 'Illégal';
   difficulty: 'Facile' | 'Moyen' | 'Difficile';
 }
@@ -41,6 +42,7 @@ const Templates = () => {
       id: 1,
       title: 'Contrôle Routier',
       description: 'Vous êtes arrêté par la police pour un contrôle routier. Comment réagissez-vous?',
+      expectedAnswer: 'Se garer en sécurité, baisser la vitre, garder les mains visibles, saluer poliment l\'officier et attendre ses instructions.',
       category: 'Legal',
       difficulty: 'Facile',
     },
@@ -48,6 +50,7 @@ const Templates = () => {
       id: 2,
       title: 'Braquage de Banque',
       description: 'Vous planifiez un braquage de banque avec votre gang. Expliquez votre plan.',
+      expectedAnswer: 'Planification détaillée, rôles définis, gestion des otages sans violence excessive, plan de fuite, respect du RP.',
       category: 'Illégal',
       difficulty: 'Difficile',
     },
@@ -55,6 +58,7 @@ const Templates = () => {
       id: 3,
       title: 'Négociation EMS',
       description: 'Vous êtes médecin et devez négocier avec un patient agressif.',
+      expectedAnswer: 'Rester calme, dialogue pour comprendre la raison, appeler la sécurité si nécessaire, prioriser la sécurité.',
       category: 'Legal',
       difficulty: 'Moyen',
     },
@@ -114,13 +118,14 @@ const Templates = () => {
   });
 
   const handleAddScenario = () => {
-    if (newScenario.title && newScenario.description) {
+    if (newScenario.title && newScenario.description && newScenario.expectedAnswer) {
       setScenarios([
         ...scenarios,
         {
           id: Date.now(),
           title: newScenario.title,
           description: newScenario.description,
+          expectedAnswer: newScenario.expectedAnswer,
           category: newScenario.category as 'Legal' | 'Illégal',
           difficulty: newScenario.difficulty as 'Facile' | 'Moyen' | 'Difficile',
         },
@@ -273,6 +278,17 @@ const Templates = () => {
                 onChange={(e) => setNewScenario({ ...newScenario, description: e.target.value })}
                 className="w-full px-4 py-2 bg-input border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary h-24 resize-none"
                 placeholder="Décrivez le scénario RP que le candidat devra jouer..."
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-foreground mb-2">
+                Réponse Attendue
+              </label>
+              <textarea
+                value={newScenario.expectedAnswer || ''}
+                onChange={(e) => setNewScenario({ ...newScenario, expectedAnswer: e.target.value })}
+                className="w-full px-4 py-2 bg-input border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary h-24 resize-none"
+                placeholder="Décrivez la réponse attendue du candidat pour ce scénario..."
               />
             </div>
             <div className="grid grid-cols-2 gap-4">
@@ -433,7 +449,11 @@ const Templates = () => {
                       {scenario.difficulty}
                     </span>
                   </div>
-                  <p className="text-sm text-muted-foreground">{scenario.description}</p>
+                  <p className="text-sm text-muted-foreground mb-3">{scenario.description}</p>
+                  <div className="bg-secondary/50 rounded-lg p-3 border-l-4 border-primary">
+                    <p className="text-sm text-muted-foreground font-medium">Réponse attendue:</p>
+                    <p className="text-sm text-foreground mt-1">{scenario.expectedAnswer}</p>
+                  </div>
                 </div>
                 <div className="flex items-center gap-2 ml-4">
                   <button className="p-2 hover:bg-secondary rounded-lg transition-colors">

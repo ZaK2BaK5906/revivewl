@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../stores/authStore';
-import axios from 'axios';
+import { authAPI } from '../services/api';
 import toast from 'react-hot-toast';
 import { Lock, User, Shield } from 'lucide-react';
 
@@ -20,10 +20,7 @@ const Login = () => {
     setLoading(true);
 
     try {
-      const response = await axios.post('/api/auth/login', {
-        username,
-        password,
-      });
+      const response = await authAPI.login(username, password);
 
       if (response.data.requiresTwoFactor) {
         setRequiresTwoFactor(true);
@@ -31,6 +28,7 @@ const Login = () => {
         toast.success('Veuillez entrer votre code 2FA');
       } else {
         setAuth(response.data.token, response.data.admin);
+        localStorage.setItem('token', response.data.token);
         toast.success('Connexion réussie !');
         navigate('/');
       }
@@ -46,12 +44,10 @@ const Login = () => {
     setLoading(true);
 
     try {
-      const response = await axios.post('/api/auth/verify-2fa', {
-        tempToken,
-        code: twoFactorCode,
-      });
+      const response = await authAPI.verify2FA(username, twoFactorCode);
 
       setAuth(response.data.token, response.data.admin);
+      localStorage.setItem('token', response.data.token);
       toast.success('Connexion réussie !');
       navigate('/');
     } catch (error: any) {

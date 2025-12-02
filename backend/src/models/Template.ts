@@ -31,6 +31,7 @@ Scenario.init(
     expectedAnswer: {
       type: DataTypes.TEXT,
       allowNull: false,
+      field: 'expected_answer',
     },
     category: {
       type: DataTypes.STRING,
@@ -74,6 +75,7 @@ RuleQuestion.init(
     answer: {
       type: DataTypes.TEXT,
       allowNull: false,
+      field: 'correct_answer',
     },
     points: {
       type: DataTypes.INTEGER,
@@ -113,6 +115,7 @@ LexiconQuestion.init(
     answer: {
       type: DataTypes.TEXT,
       allowNull: false,
+      field: 'correct_answer',
     },
     points: {
       type: DataTypes.INTEGER,

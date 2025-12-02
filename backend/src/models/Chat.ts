@@ -21,6 +21,7 @@ ChatMessage.init(
     sender: {
       type: DataTypes.STRING,
       allowNull: false,
+      field: 'author',
     },
     content: {
       type: DataTypes.TEXT,
@@ -29,6 +30,7 @@ ChatMessage.init(
     isCurrentUser: {
       type: DataTypes.BOOLEAN,
       defaultValue: false,
+      field: 'is_current_user',
     },
     timestamp: {
       type: DataTypes.DATE,

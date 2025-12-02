@@ -6,7 +6,7 @@ export const getAllWhitelists = async (req: Request, res: Response) => {
     const { limit, sort, order, status, category } = req.query;
 
     const queryOptions: any = {
-      order: [[sort as string || 'createdAt', order as string || 'DESC']],
+      order: [[sort as string || 'created_at', order as string || 'DESC']],
     };
 
     if (limit) {

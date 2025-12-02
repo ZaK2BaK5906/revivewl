@@ -5,7 +5,7 @@ import { Scenario, RuleQuestion, LexiconQuestion } from '../models/Template';
 export const getAllScenarios = async (_req: Request, res: Response) => {
   try {
     const scenarios = await Scenario.findAll({
-      order: [['createdAt', 'DESC']],
+      order: [['created_at', 'DESC']],
     });
     return res.json(scenarios);
   } catch (error: any) {
@@ -62,7 +62,7 @@ export const deleteScenario = async (req: Request, res: Response) => {
 export const getAllRuleQuestions = async (_req: Request, res: Response) => {
   try {
     const questions = await RuleQuestion.findAll({
-      order: [['createdAt', 'DESC']],
+      order: [['created_at', 'DESC']],
     });
     return res.json(questions);
   } catch (error: any) {
@@ -119,7 +119,7 @@ export const deleteRuleQuestion = async (req: Request, res: Response) => {
 export const getAllLexiconQuestions = async (_req: Request, res: Response) => {
   try {
     const questions = await LexiconQuestion.findAll({
-      order: [['createdAt', 'DESC']],
+      order: [['created_at', 'DESC']],
     });
     return res.json(questions);
   } catch (error: any) {

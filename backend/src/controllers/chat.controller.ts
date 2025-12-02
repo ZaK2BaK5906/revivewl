@@ -6,7 +6,7 @@ export const getAllMessages = async (req: Request, res: Response) => {
     const { limit } = req.query;
 
     const queryOptions: any = {
-      order: [['createdAt', 'ASC']],
+      order: [['created_at', 'ASC']],
     };
 
     if (limit) {

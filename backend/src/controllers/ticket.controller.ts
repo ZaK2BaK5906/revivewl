@@ -12,7 +12,7 @@ export const getAllTickets = async (req: Request, res: Response) => {
     const tickets = await Ticket.findAll({
       where,
       include: [{ model: TicketComment, as: 'comments' }],
-      order: [['createdAt', 'DESC']],
+      order: [['created_at', 'DESC']],
     });
 
     return res.json(tickets);

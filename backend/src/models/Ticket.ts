@@ -49,6 +49,7 @@ Ticket.init(
     assignedTo: {
       type: DataTypes.STRING,
       allowNull: true,
+      field: 'assigned_to',
     },
     messages: {
       type: DataTypes.INTEGER,
@@ -83,6 +84,7 @@ TicketComment.init(
     ticketId: {
       type: DataTypes.INTEGER,
       allowNull: false,
+      field: 'ticket_id',
       references: {
         model: 'tickets',
         key: 'id',

@@ -30,7 +30,7 @@ export const getDashboardStats = async (_req: Request, res: Response) => {
     // Recent whitelists
     const recentWhitelists = await Whitelist.findAll({
       limit: 5,
-      order: [['createdAt', 'DESC']],
+      order: [['created_at', 'DESC']],
     });
 
     // Top admins (by whitelist count)

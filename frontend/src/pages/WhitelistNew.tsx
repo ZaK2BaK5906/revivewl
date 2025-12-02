@@ -1,12 +1,16 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, ArrowRight, CheckCircle, User, Tag, FileText, Save, AlertTriangle } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { whitelistAPI } from '../services/api';
 
 type Step = 1 | 2 | 3 | 4 | 5;
 
 const WhitelistNew = () => {
+  const navigate = useNavigate();
   const [currentStep, setCurrentStep] = useState<Step>(1);
   const [ageBlocked, setAgeBlocked] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     // Étape 1 - Infos candidat
     firstname: '',
@@ -65,9 +69,76 @@ const WhitelistNew = () => {
     }
   };
 
-  const handleSubmit = () => {
-    console.log('Submitting whitelist:', formData);
-    // TODO: Envoyer à l'API
+  const handleValidate = async () => {
+    try {
+      setSubmitting(true);
+
+      // Create whitelist first
+      const whitelistData = {
+        candidate_firstname: formData.firstname,
+        candidate_lastname: formData.lastname,
+        discord_username: formData.discord,
+        age: parseInt(formData.age),
+        experience_level: formData.experienceLevel,
+        rp_hours: parseInt(formData.rpHours) || 0,
+        category: formData.category,
+        admin_notes: formData.adminNotes,
+        total_score: calculateScore(),
+      };
+
+      const response = await whitelistAPI.create(whitelistData);
+      const whitelistId = response.data.id;
+
+      // Then validate it
+      await whitelistAPI.validate(whitelistId, formData.adminNotes);
+
+      toast.success('Whitelist validée avec succès!');
+      navigate('/whitelists');
+    } catch (error: any) {
+      console.error('Error validating whitelist:', error);
+      toast.error('Erreur lors de la validation de la whitelist');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleRefuse = async () => {
+    const refusalReason = prompt('Raison du refus (obligatoire):');
+    if (!refusalReason || refusalReason.trim() === '') {
+      toast.error('La raison du refus est obligatoire');
+      return;
+    }
+
+    try {
+      setSubmitting(true);
+
+      // Create whitelist first
+      const whitelistData = {
+        candidate_firstname: formData.firstname,
+        candidate_lastname: formData.lastname,
+        discord_username: formData.discord,
+        age: parseInt(formData.age),
+        experience_level: formData.experienceLevel,
+        rp_hours: parseInt(formData.rpHours) || 0,
+        category: formData.category,
+        admin_notes: formData.adminNotes,
+        total_score: calculateScore(),
+      };
+
+      const response = await whitelistAPI.create(whitelistData);
+      const whitelistId = response.data.id;
+
+      // Then refuse it
+      await whitelistAPI.refuse(whitelistId, refusalReason);
+
+      toast.success('Whitelist refusée');
+      navigate('/whitelists');
+    } catch (error: any) {
+      console.error('Error refusing whitelist:', error);
+      toast.error('Erreur lors du refus de la whitelist');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const calculateScore = () => {
@@ -429,24 +500,20 @@ const WhitelistNew = () => {
             </div>
 
             {/* Actions */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <button
-                onClick={handleSubmit}
-                className="bg-gradient-to-r from-green-500 to-emerald-600 text-white py-4 rounded-lg font-medium hover:from-green-600 hover:to-emerald-700 transition-all shadow-lg shadow-green-500/50"
+                onClick={handleValidate}
+                disabled={submitting}
+                className="bg-gradient-to-r from-green-500 to-emerald-600 text-white py-4 rounded-lg font-medium hover:from-green-600 hover:to-emerald-700 transition-all shadow-lg shadow-green-500/50 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                ✓ Valider la WL
+                {submitting ? 'En cours...' : '✓ Confirmer et Valider'}
               </button>
               <button
-                onClick={handleSubmit}
-                className="bg-gradient-to-r from-orange-500 to-amber-600 text-white py-4 rounded-lg font-medium hover:from-orange-600 hover:to-amber-700 transition-all shadow-lg shadow-orange-500/50"
+                onClick={handleRefuse}
+                disabled={submitting}
+                className="bg-gradient-to-r from-red-500 to-rose-600 text-white py-4 rounded-lg font-medium hover:from-red-600 hover:to-rose-700 transition-all shadow-lg shadow-red-500/50 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                ⏸ Mettre en attente
-              </button>
-              <button
-                onClick={handleSubmit}
-                className="bg-gradient-to-r from-red-500 to-rose-600 text-white py-4 rounded-lg font-medium hover:from-red-600 hover:to-rose-700 transition-all shadow-lg shadow-red-500/50"
-              >
-                ✗ Refuser la WL
+                {submitting ? 'En cours...' : '✗ Refuser la WL'}
               </button>
             </div>
           </div>

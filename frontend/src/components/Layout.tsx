@@ -12,13 +12,23 @@ import {
   Menu,
   FileEdit,
   X,
+  UserCircle,
 } from 'lucide-react';
 import { useState } from 'react';
+import { adminAPI } from '../services/api';
+import toast from 'react-hot-toast';
 
 const Layout = () => {
   const { admin, logout } = useAuthStore();
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [profileModalOpen, setProfileModalOpen] = useState(false);
+  const [profileForm, setProfileForm] = useState({
+    username: '',
+    password: '',
+    currentPassword: '',
+  });
+  const [submitting, setSubmitting] = useState(false);
 
   const navigation = [
     { name: 'Dashboard', href: '/', icon: LayoutDashboard },
@@ -33,6 +43,46 @@ const Layout = () => {
   if (admin?.is_master) {
     navigation.push({ name: 'Admins', href: '/admins', icon: Users });
   }
+
+  const handleProfileUpdate = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    try {
+      setSubmitting(true);
+      const updateData: any = {};
+
+      if (profileForm.username && profileForm.username !== admin?.username) {
+        updateData.username = profileForm.username;
+      }
+
+      if (profileForm.password) {
+        if (!profileForm.currentPassword) {
+          toast.error('Le mot de passe actuel est requis');
+          return;
+        }
+        updateData.password = profileForm.password;
+        updateData.currentPassword = profileForm.currentPassword;
+      }
+
+      if (Object.keys(updateData).length === 0) {
+        toast.error('Aucune modification à enregistrer');
+        return;
+      }
+
+      await adminAPI.updateOwnProfile(updateData);
+      toast.success('Profil mis à jour avec succès!');
+      setProfileModalOpen(false);
+      setProfileForm({ username: '', password: '', currentPassword: '' });
+
+      // Reload page to reflect changes
+      window.location.reload();
+    } catch (error: any) {
+      console.error('Error updating profile:', error);
+      toast.error(error.response?.data?.error || 'Erreur lors de la mise à jour du profil');
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -96,6 +146,13 @@ const Layout = () => {
                 </p>
               </div>
             </div>
+            <button
+              onClick={() => setProfileModalOpen(true)}
+              className="flex items-center w-full px-4 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-secondary rounded-lg mb-2 transition-colors"
+            >
+              <UserCircle className="w-4 h-4 mr-2" />
+              Mon Profil
+            </button>
             <Link
               to="/settings"
               className="flex items-center w-full px-4 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-secondary rounded-lg mb-2 transition-colors"
@@ -141,6 +198,84 @@ const Layout = () => {
           <Outlet />
         </main>
       </div>
+
+      {/* Profile Edit Modal */}
+      {profileModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+          <div className="bg-card border border-border rounded-xl p-6 w-full max-w-md shadow-2xl">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-2xl font-bold text-foreground">Mon Profil</h2>
+              <button
+                onClick={() => setProfileModalOpen(false)}
+                className="p-2 hover:bg-secondary rounded-lg transition-colors"
+              >
+                <X className="w-5 h-5 text-muted-foreground" />
+              </button>
+            </div>
+
+            <form onSubmit={handleProfileUpdate} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-2">
+                  Nom d'utilisateur
+                </label>
+                <input
+                  type="text"
+                  value={profileForm.username}
+                  onChange={(e) => setProfileForm({ ...profileForm, username: e.target.value })}
+                  placeholder={admin?.username}
+                  className="w-full px-4 py-3 bg-background border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all text-foreground placeholder:text-muted-foreground"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-2">
+                  Nouveau mot de passe (optionnel)
+                </label>
+                <input
+                  type="password"
+                  value={profileForm.password}
+                  onChange={(e) => setProfileForm({ ...profileForm, password: e.target.value })}
+                  placeholder="••••••••"
+                  className="w-full px-4 py-3 bg-background border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all text-foreground placeholder:text-muted-foreground"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-2">
+                  Mot de passe actuel *
+                </label>
+                <input
+                  type="password"
+                  value={profileForm.currentPassword}
+                  onChange={(e) => setProfileForm({ ...profileForm, currentPassword: e.target.value })}
+                  placeholder="••••••••"
+                  className="w-full px-4 py-3 bg-background border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all text-foreground placeholder:text-muted-foreground"
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  Requis pour toute modification
+                </p>
+              </div>
+
+              <div className="flex gap-3 mt-6">
+                <button
+                  type="button"
+                  onClick={() => setProfileModalOpen(false)}
+                  className="flex-1 px-4 py-3 bg-secondary text-foreground rounded-lg font-medium hover:bg-secondary/80 transition-all"
+                >
+                  Annuler
+                </button>
+                <button
+                  type="submit"
+                  disabled={submitting}
+                  className="flex-1 px-4 py-3 bg-primary text-primary-foreground rounded-lg font-medium hover:bg-primary/90 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {submitting ? 'En cours...' : 'Enregistrer'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

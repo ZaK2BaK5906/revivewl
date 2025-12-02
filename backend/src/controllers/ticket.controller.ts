@@ -15,10 +15,10 @@ export const getAllTickets = async (req: Request, res: Response) => {
       order: [['createdAt', 'DESC']],
     });
 
-    res.json(tickets);
+    return res.json(tickets);
   } catch (error: any) {
     console.error('Error fetching tickets:', error);
-    res.status(500).json({ error: 'Failed to fetch tickets' });
+    return res.status(500).json({ error: 'Failed to fetch tickets' });
   }
 };
 
@@ -33,10 +33,10 @@ export const getTicketById = async (req: Request, res: Response) => {
       return res.status(404).json({ error: 'Ticket not found' });
     }
 
-    res.json(ticket);
+    return res.json(ticket);
   } catch (error: any) {
     console.error('Error fetching ticket:', error);
-    res.status(500).json({ error: 'Failed to fetch ticket' });
+    return res.status(500).json({ error: 'Failed to fetch ticket' });
   }
 };
 
@@ -48,10 +48,10 @@ export const createTicket = async (req: Request, res: Response) => {
       author: (req as any).admin.username,
     });
 
-    res.status(201).json(ticket);
+    return res.status(201).json(ticket);
   } catch (error: any) {
     console.error('Error creating ticket:', error);
-    res.status(500).json({ error: 'Failed to create ticket' });
+    return res.status(500).json({ error: 'Failed to create ticket' });
   }
 };
 
@@ -65,10 +65,10 @@ export const updateTicket = async (req: Request, res: Response) => {
     }
 
     await ticket.update(req.body);
-    res.json(ticket);
+    return res.json(ticket);
   } catch (error: any) {
     console.error('Error updating ticket:', error);
-    res.status(500).json({ error: 'Failed to update ticket' });
+    return res.status(500).json({ error: 'Failed to update ticket' });
   }
 };
 
@@ -82,10 +82,10 @@ export const deleteTicket = async (req: Request, res: Response) => {
     }
 
     await ticket.destroy();
-    res.json({ message: 'Ticket deleted successfully' });
+    return res.json({ message: 'Ticket deleted successfully' });
   } catch (error: any) {
     console.error('Error deleting ticket:', error);
-    res.status(500).json({ error: 'Failed to delete ticket' });
+    return res.status(500).json({ error: 'Failed to delete ticket' });
   }
 };
 
@@ -105,9 +105,9 @@ export const addComment = async (req: Request, res: Response) => {
       content,
     });
 
-    res.status(201).json(comment);
+    return res.status(201).json(comment);
   } catch (error: any) {
     console.error('Error adding comment:', error);
-    res.status(500).json({ error: 'Failed to add comment' });
+    return res.status(500).json({ error: 'Failed to add comment' });
   }
 };

@@ -52,7 +52,7 @@ export const getDashboardStats = async (_req: Request, res: Response) => {
       raw: true,
     });
 
-    res.json({
+    return res.json({
       stats: {
         total,
         validated,
@@ -67,7 +67,7 @@ export const getDashboardStats = async (_req: Request, res: Response) => {
     });
   } catch (error: any) {
     console.error('Error fetching dashboard stats:', error);
-    res.status(500).json({ error: 'Failed to fetch dashboard stats' });
+    return res.status(500).json({ error: 'Failed to fetch dashboard stats' });
   }
 };
 
@@ -114,7 +114,7 @@ export const getWhitelistStats = async (req: Request, res: Response) => {
       where: { ...dateFilter, status: 'pending' },
     });
 
-    res.json({
+    return res.json({
       total,
       validated,
       refused,
@@ -123,7 +123,7 @@ export const getWhitelistStats = async (req: Request, res: Response) => {
     });
   } catch (error: any) {
     console.error('Error fetching whitelist stats:', error);
-    res.status(500).json({ error: 'Failed to fetch whitelist stats' });
+    return res.status(500).json({ error: 'Failed to fetch whitelist stats' });
   }
 };
 
@@ -134,7 +134,7 @@ export const getAdminStats = async (_req: Request, res: Response) => {
     const admins = await Admin.count({ where: { role: 'Admin' } });
     const moderators = await Admin.count({ where: { role: 'Modérateur' } });
 
-    res.json({
+    return res.json({
       total: totalAdmins,
       masterAdmins,
       admins,
@@ -142,6 +142,6 @@ export const getAdminStats = async (_req: Request, res: Response) => {
     });
   } catch (error: any) {
     console.error('Error fetching admin stats:', error);
-    res.status(500).json({ error: 'Failed to fetch admin stats' });
+    return res.status(500).json({ error: 'Failed to fetch admin stats' });
   }
 };

@@ -20,10 +20,10 @@ export const getAllWhitelists = async (req: Request, res: Response) => {
     queryOptions.where = where;
 
     const whitelists = await Whitelist.findAll(queryOptions);
-    res.json(whitelists);
+    return res.json(whitelists);
   } catch (error: any) {
     console.error('Error fetching whitelists:', error);
-    res.status(500).json({ error: 'Failed to fetch whitelists' });
+    return res.status(500).json({ error: 'Failed to fetch whitelists' });
   }
 };
 
@@ -36,10 +36,10 @@ export const getWhitelistById = async (req: Request, res: Response) => {
       return res.status(404).json({ error: 'Whitelist not found' });
     }
 
-    res.json(whitelist);
+    return res.json(whitelist);
   } catch (error: any) {
     console.error('Error fetching whitelist:', error);
-    res.status(500).json({ error: 'Failed to fetch whitelist' });
+    return res.status(500).json({ error: 'Failed to fetch whitelist' });
   }
 };
 
@@ -57,10 +57,10 @@ export const createWhitelist = async (req: Request, res: Response) => {
     }
 
     const whitelist = await Whitelist.create(whitelistData);
-    res.status(201).json(whitelist);
+    return res.status(201).json(whitelist);
   } catch (error: any) {
     console.error('Error creating whitelist:', error);
-    res.status(500).json({ error: 'Failed to create whitelist' });
+    return res.status(500).json({ error: 'Failed to create whitelist' });
   }
 };
 
@@ -75,10 +75,10 @@ export const updateWhitelist = async (req: Request, res: Response) => {
     }
 
     await whitelist.update(updateData);
-    res.json(whitelist);
+    return res.json(whitelist);
   } catch (error: any) {
     console.error('Error updating whitelist:', error);
-    res.status(500).json({ error: 'Failed to update whitelist' });
+    return res.status(500).json({ error: 'Failed to update whitelist' });
   }
 };
 
@@ -92,10 +92,10 @@ export const deleteWhitelist = async (req: Request, res: Response) => {
     }
 
     await whitelist.destroy();
-    res.json({ message: 'Whitelist deleted successfully' });
+    return res.json({ message: 'Whitelist deleted successfully' });
   } catch (error: any) {
     console.error('Error deleting whitelist:', error);
-    res.status(500).json({ error: 'Failed to delete whitelist' });
+    return res.status(500).json({ error: 'Failed to delete whitelist' });
   }
 };
 
@@ -106,7 +106,7 @@ export const getWhitelistStats = async (_req: Request, res: Response) => {
     const refused = await Whitelist.count({ where: { status: 'refused' } });
     const pending = await Whitelist.count({ where: { status: 'pending' } });
 
-    res.json({
+    return res.json({
       total,
       validated,
       refused,
@@ -114,6 +114,6 @@ export const getWhitelistStats = async (_req: Request, res: Response) => {
     });
   } catch (error: any) {
     console.error('Error fetching whitelist stats:', error);
-    res.status(500).json({ error: 'Failed to fetch whitelist stats' });
+    return res.status(500).json({ error: 'Failed to fetch whitelist stats' });
   }
 };

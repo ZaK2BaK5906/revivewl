@@ -14,10 +14,10 @@ export const getAllMessages = async (req: Request, res: Response) => {
     }
 
     const messages = await ChatMessage.findAll(queryOptions);
-    res.json(messages);
+    return res.json(messages);
   } catch (error: any) {
     console.error('Error fetching messages:', error);
-    res.status(500).json({ error: 'Failed to fetch messages' });
+    return res.status(500).json({ error: 'Failed to fetch messages' });
   }
 };
 
@@ -32,10 +32,10 @@ export const sendMessage = async (req: Request, res: Response) => {
       isCurrentUser: true,
     });
 
-    res.status(201).json(message);
+    return res.status(201).json(message);
   } catch (error: any) {
     console.error('Error sending message:', error);
-    res.status(500).json({ error: 'Failed to send message' });
+    return res.status(500).json({ error: 'Failed to send message' });
   }
 };
 
@@ -49,9 +49,9 @@ export const deleteMessage = async (req: Request, res: Response) => {
     }
 
     await message.destroy();
-    res.json({ message: 'Message deleted successfully' });
+    return res.json({ message: 'Message deleted successfully' });
   } catch (error: any) {
     console.error('Error deleting message:', error);
-    res.status(500).json({ error: 'Failed to delete message' });
+    return res.status(500).json({ error: 'Failed to delete message' });
   }
 };

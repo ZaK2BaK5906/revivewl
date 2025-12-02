@@ -1,17 +1,18 @@
 import { Request, Response } from 'express';
 import Admin from '../models/Admin';
+import Permission from '../models/Permission';
 import bcrypt from 'bcryptjs';
 
 export const getAllAdmins = async (_req: Request, res: Response) => {
   try {
     const admins = await Admin.findAll({
-      attributes: { exclude: ['password'] },
-      order: [['createdAt', 'DESC']],
+      attributes: { exclude: ['password_hash'] },
+      order: [['created_at', 'DESC']],
     });
-    res.json(admins);
+    return res.json(admins);
   } catch (error: any) {
     console.error('Error fetching admins:', error);
-    res.status(500).json({ error: 'Failed to fetch admins' });
+    return res.status(500).json({ error: 'Failed to fetch admins' });
   }
 };
 
@@ -19,23 +20,23 @@ export const getAdminById = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const admin = await Admin.findByPk(id, {
-      attributes: { exclude: ['password'] },
+      attributes: { exclude: ['password_hash'] },
     });
 
     if (!admin) {
       return res.status(404).json({ error: 'Admin not found' });
     }
 
-    res.json(admin);
+    return res.json(admin);
   } catch (error: any) {
     console.error('Error fetching admin:', error);
-    res.status(500).json({ error: 'Failed to fetch admin' });
+    return res.status(500).json({ error: 'Failed to fetch admin' });
   }
 };
 
 export const createAdmin = async (req: Request, res: Response) => {
   try {
-    const { username, email, password, role } = req.body;
+    const { username, email, password, is_master } = req.body;
 
     // Check if admin already exists
     const existingAdmin = await Admin.findOne({
@@ -49,37 +50,21 @@ export const createAdmin = async (req: Request, res: Response) => {
     // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Create admin with default permissions
+    // Create admin
     const admin = await Admin.create({
       username,
       email,
-      password: hashedPassword,
-      role: role || 'Modérateur',
-      permissions: {
-        whitelistCreate: true,
-        whitelistEdit: false,
-        whitelistDelete: false,
-        whitelistView: true,
-        templateManage: false,
-        adminManage: false,
-        chatAccess: true,
-        ticketManage: false,
-        settingsManage: false,
-        rulesEdit: false,
-        statisticsView: true,
-        backupManage: false,
-        webhookManage: false,
-        logsView: false,
-      },
+      password_hash: hashedPassword,
+      is_master: is_master || false,
     });
 
-    const adminResponse = admin.toJSON();
-    delete adminResponse.password;
+    const adminResponse = admin.toJSON() as any;
+    delete adminResponse.password_hash;
 
-    res.status(201).json(adminResponse);
+    return res.status(201).json(adminResponse);
   } catch (error: any) {
     console.error('Error creating admin:', error);
-    res.status(500).json({ error: 'Failed to create admin' });
+    return res.status(500).json({ error: 'Failed to create admin' });
   }
 };
 
@@ -95,18 +80,19 @@ export const updateAdmin = async (req: Request, res: Response) => {
 
     // If password is being updated, hash it
     if (updateData.password) {
-      updateData.password = await bcrypt.hash(updateData.password, 10);
+      updateData.password_hash = await bcrypt.hash(updateData.password, 10);
+      delete updateData.password;
     }
 
     await admin.update(updateData);
 
-    const adminResponse = admin.toJSON();
-    delete adminResponse.password;
+    const adminResponse = admin.toJSON() as any;
+    delete adminResponse.password_hash;
 
-    res.json(adminResponse);
+    return res.json(adminResponse);
   } catch (error: any) {
     console.error('Error updating admin:', error);
-    res.status(500).json({ error: 'Failed to update admin' });
+    return res.status(500).json({ error: 'Failed to update admin' });
   }
 };
 
@@ -120,31 +106,38 @@ export const deleteAdmin = async (req: Request, res: Response) => {
     }
 
     await admin.destroy();
-    res.json({ message: 'Admin deleted successfully' });
+    return res.json({ message: 'Admin deleted successfully' });
   } catch (error: any) {
     console.error('Error deleting admin:', error);
-    res.status(500).json({ error: 'Failed to delete admin' });
+    return res.status(500).json({ error: 'Failed to delete admin' });
   }
 };
 
 export const updatePermissions = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const permissions = req.body;
+    const permissionsData = req.body;
 
     const admin = await Admin.findByPk(id);
     if (!admin) {
       return res.status(404).json({ error: 'Admin not found' });
     }
 
-    await admin.update({ permissions });
+    // Find or create permissions for this admin
+    let permission = await Permission.findOne({ where: { admin_id: id } });
 
-    const adminResponse = admin.toJSON();
-    delete adminResponse.password;
+    if (permission) {
+      await permission.update(permissionsData);
+    } else {
+      permission = await Permission.create({
+        admin_id: parseInt(id),
+        ...permissionsData,
+      });
+    }
 
-    res.json(adminResponse);
+    return res.json(permission);
   } catch (error: any) {
     console.error('Error updating permissions:', error);
-    res.status(500).json({ error: 'Failed to update permissions' });
+    return res.status(500).json({ error: 'Failed to update permissions' });
   }
 };

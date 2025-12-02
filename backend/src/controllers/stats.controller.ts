@@ -38,12 +38,12 @@ export const getDashboardStats = async (_req: Request, res: Response) => {
       attributes: [
         'id',
         'username',
-        [sequelize.fn('COUNT', sequelize.col('Whitelists.id')), 'count'],
+        [sequelize.fn('COUNT', sequelize.col('whitelists.id')), 'count'],
       ],
       include: [
         {
           model: Whitelist,
-          as: 'Whitelists',
+          as: 'whitelists',
           attributes: [],
         },
       ],

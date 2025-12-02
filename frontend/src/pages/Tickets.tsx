@@ -44,7 +44,13 @@ const Tickets = () => {
     try {
       setLoading(true);
       const response = await ticketAPI.getAll();
-      setTickets(response.data || []);
+      // Convert date strings to Date objects
+      const ticketsWithDates = (response.data || []).map((ticket: any) => ({
+        ...ticket,
+        createdAt: new Date(ticket.createdAt),
+        updatedAt: new Date(ticket.updatedAt),
+      }));
+      setTickets(ticketsWithDates);
     } catch (error: any) {
       console.error('Error fetching tickets:', error);
       toast.error('Erreur lors du chargement des tickets');
@@ -101,9 +107,10 @@ const Tickets = () => {
     }
   };
 
-  const formatTime = (date: Date) => {
+  const formatTime = (date: Date | string) => {
+    const dateObj = typeof date === 'string' ? new Date(date) : date;
     const now = new Date();
-    const diff = now.getTime() - date.getTime();
+    const diff = now.getTime() - dateObj.getTime();
     const minutes = Math.floor(diff / 60000);
     const hours = Math.floor(minutes / 60);
     const days = Math.floor(hours / 24);
@@ -112,7 +119,7 @@ const Tickets = () => {
     if (minutes < 60) return `Il y a ${minutes} min`;
     if (hours < 24) return `Il y a ${hours}h`;
     if (days < 30) return `Il y a ${days}j`;
-    return date.toLocaleDateString('fr-FR');
+    return dateObj.toLocaleDateString('fr-FR');
   };
 
   const filteredTickets = tickets.filter((ticket) => {

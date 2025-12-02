@@ -8,6 +8,12 @@ import { Server } from 'socket.io';
 import http from 'http';
 import { testConnection } from './config/database';
 import authRoutes from './routes/auth.routes';
+import whitelistRoutes from './routes/whitelist.routes';
+import templateRoutes from './routes/template.routes';
+import adminRoutes from './routes/admin.routes';
+import ticketRoutes from './routes/ticket.routes';
+import chatRoutes from './routes/chat.routes';
+import statsRoutes from './routes/stats.routes';
 
 dotenv.config();
 
@@ -35,6 +41,12 @@ app.use(express.urlencoded({ extended: true }));
 
 // Routes
 app.use('/api/auth', authRoutes);
+app.use('/api/whitelists', whitelistRoutes);
+app.use('/api/templates', templateRoutes);
+app.use('/api/admins', adminRoutes);
+app.use('/api/tickets', ticketRoutes);
+app.use('/api/chat', chatRoutes);
+app.use('/api/stats', statsRoutes);
 
 // Health check
 app.get('/health', (_req, res) => {

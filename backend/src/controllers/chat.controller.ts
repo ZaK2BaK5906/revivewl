@@ -3,7 +3,7 @@ import { ChatMessage } from '../models/Chat';
 
 export const getAllMessages = async (req: Request, res: Response) => {
   try {
-    const { limit } = req.query;
+    const { limit, room } = req.query;
 
     const queryOptions: any = {
       order: [['created_at', 'ASC']],
@@ -11,6 +11,10 @@ export const getAllMessages = async (req: Request, res: Response) => {
 
     if (limit) {
       queryOptions.limit = parseInt(limit as string);
+    }
+
+    if (room) {
+      queryOptions.where = { room };
     }
 
     const messages = await ChatMessage.findAll(queryOptions);
@@ -23,16 +27,18 @@ export const getAllMessages = async (req: Request, res: Response) => {
 
 export const sendMessage = async (req: Request, res: Response) => {
   try {
-    const { content } = req.body;
+    const { message, room } = req.body;
     const admin = (req as any).admin;
 
-    const message = await ChatMessage.create({
-      sender: admin.username,
-      content,
-      isCurrentUser: true,
+    const newMessage = await ChatMessage.create({
+      admin_id: admin.id,
+      room: room || 'general',
+      message,
+      attachments: null,
+      is_edited: false,
     });
 
-    return res.status(201).json(message);
+    return res.status(201).json(newMessage);
   } catch (error: any) {
     console.error('Error sending message:', error);
     return res.status(500).json({ error: 'Failed to send message' });

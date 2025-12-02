@@ -4,11 +4,12 @@ import sequelize from '../config/database';
 // Scenario Model
 export class Scenario extends Model {
   public id!: number;
+  public category_id!: number;
   public title!: string;
   public description!: string;
-  public expectedAnswer!: string;
-  public category!: string;
-  public difficulty!: string;
+  public expected_answer!: string | null;
+  public points!: number;
+  public is_active!: boolean;
   public createdAt!: Date;
   public updatedAt!: Date;
 }
@@ -20,26 +21,33 @@ Scenario.init(
       autoIncrement: true,
       primaryKey: true,
     },
+    category_id: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      references: {
+        model: 'wl_categories',
+        key: 'id',
+      },
+    },
     title: {
-      type: DataTypes.STRING,
+      type: DataTypes.STRING(255),
       allowNull: false,
     },
     description: {
       type: DataTypes.TEXT,
       allowNull: false,
     },
-    expectedAnswer: {
+    expected_answer: {
       type: DataTypes.TEXT,
-      allowNull: false,
-      field: 'expected_answer',
+      allowNull: true,
     },
-    category: {
-      type: DataTypes.STRING,
-      allowNull: false,
+    points: {
+      type: DataTypes.INTEGER,
+      defaultValue: 10,
     },
-    difficulty: {
-      type: DataTypes.STRING,
-      allowNull: false,
+    is_active: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: true,
     },
   },
   {
@@ -55,8 +63,10 @@ Scenario.init(
 export class RuleQuestion extends Model {
   public id!: number;
   public question!: string;
-  public answer!: string;
+  public correct_answer!: string;
+  public category_id!: number | null;
   public points!: number;
+  public is_active!: boolean;
   public createdAt!: Date;
   public updatedAt!: Date;
 }
@@ -72,14 +82,25 @@ RuleQuestion.init(
       type: DataTypes.TEXT,
       allowNull: false,
     },
-    answer: {
+    correct_answer: {
       type: DataTypes.TEXT,
       allowNull: false,
-      field: 'correct_answer',
+    },
+    category_id: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      references: {
+        model: 'wl_categories',
+        key: 'id',
+      },
     },
     points: {
       type: DataTypes.INTEGER,
       defaultValue: 5,
+    },
+    is_active: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: true,
     },
   },
   {
@@ -95,8 +116,10 @@ RuleQuestion.init(
 export class LexiconQuestion extends Model {
   public id!: number;
   public question!: string;
-  public answer!: string;
+  public correct_answer!: string;
+  public category_id!: number | null;
   public points!: number;
+  public is_active!: boolean;
   public createdAt!: Date;
   public updatedAt!: Date;
 }
@@ -112,14 +135,25 @@ LexiconQuestion.init(
       type: DataTypes.TEXT,
       allowNull: false,
     },
-    answer: {
+    correct_answer: {
       type: DataTypes.TEXT,
       allowNull: false,
-      field: 'correct_answer',
+    },
+    category_id: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      references: {
+        model: 'wl_categories',
+        key: 'id',
+      },
     },
     points: {
       type: DataTypes.INTEGER,
       defaultValue: 5,
+    },
+    is_active: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: true,
     },
   },
   {

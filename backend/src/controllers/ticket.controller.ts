@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import { Ticket, TicketComment } from '../models/Ticket';
+import sequelize from '../config/database';
 
 export const getAllTickets = async (req: Request, res: Response) => {
   try {
@@ -11,8 +12,22 @@ export const getAllTickets = async (req: Request, res: Response) => {
 
     const tickets = await Ticket.findAll({
       where,
-      include: [{ model: TicketComment, as: 'comments' }],
+      attributes: {
+        include: [
+          [sequelize.fn('COUNT', sequelize.col('comments.id')), 'messages']
+        ]
+      },
+      include: [
+        {
+          model: TicketComment,
+          as: 'comments',
+          attributes: []
+        }
+      ],
+      group: ['Ticket.id'],
       order: [['created_at', 'DESC']],
+      raw: false,
+      subQuery: false,
     });
 
     return res.json(tickets);
@@ -42,10 +57,17 @@ export const getTicketById = async (req: Request, res: Response) => {
 
 export const createTicket = async (req: Request, res: Response) => {
   try {
+    const { title, description, type, priority } = req.body;
+    const admin = (req as any).admin;
+
     const ticket = await Ticket.create({
-      ...req.body,
-      status: 'ouvert',
-      author: (req as any).admin.username,
+      title,
+      description,
+      type: type || 'Autre',
+      priority: priority || 'Normale',
+      status: 'Ouvert',
+      created_by: admin.id,
+      assigned_to: null,
     });
 
     return res.status(201).json(ticket);
@@ -92,20 +114,22 @@ export const deleteTicket = async (req: Request, res: Response) => {
 export const addComment = async (req: Request, res: Response) => {
   try {
     const { ticketId } = req.params;
-    const { content } = req.body;
+    const { comment } = req.body;
+    const admin = (req as any).admin;
 
     const ticket = await Ticket.findByPk(ticketId);
     if (!ticket) {
       return res.status(404).json({ error: 'Ticket not found' });
     }
 
-    const comment = await TicketComment.create({
-      ticketId: parseInt(ticketId),
-      author: (req as any).admin.username,
-      content,
+    const newComment = await TicketComment.create({
+      ticket_id: parseInt(ticketId),
+      admin_id: admin.id,
+      comment,
+      attachments: null,
     });
 
-    return res.status(201).json(comment);
+    return res.status(201).json(newComment);
   } catch (error: any) {
     console.error('Error adding comment:', error);
     return res.status(500).json({ error: 'Failed to add comment' });

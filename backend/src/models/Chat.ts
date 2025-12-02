@@ -3,10 +3,11 @@ import sequelize from '../config/database';
 
 export class ChatMessage extends Model {
   public id!: number;
-  public sender!: string;
-  public content!: string;
-  public isCurrentUser!: boolean;
-  public timestamp!: Date;
+  public admin_id!: number;
+  public room!: string;
+  public message!: string;
+  public attachments!: string | null;
+  public is_edited!: boolean;
   public createdAt!: Date;
   public updatedAt!: Date;
 }
@@ -18,23 +19,29 @@ ChatMessage.init(
       autoIncrement: true,
       primaryKey: true,
     },
-    sender: {
-      type: DataTypes.STRING,
+    admin_id: {
+      type: DataTypes.INTEGER,
       allowNull: false,
-      field: 'author',
+      references: {
+        model: 'admins',
+        key: 'id',
+      },
     },
-    content: {
+    room: {
+      type: DataTypes.STRING(50),
+      defaultValue: 'general',
+    },
+    message: {
       type: DataTypes.TEXT,
       allowNull: false,
     },
-    isCurrentUser: {
+    attachments: {
+      type: DataTypes.TEXT,
+      allowNull: true,
+    },
+    is_edited: {
       type: DataTypes.BOOLEAN,
       defaultValue: false,
-      field: 'is_current_user',
-    },
-    timestamp: {
-      type: DataTypes.DATE,
-      defaultValue: DataTypes.NOW,
     },
   },
   {

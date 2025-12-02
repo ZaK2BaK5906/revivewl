@@ -2,7 +2,7 @@ import { Request, Response } from 'express';
 import Whitelist from '../models/Whitelist';
 import Admin from '../models/Admin';
 import sequelize from '../config/database';
-import { Op } from 'sequelize';
+import { Op, QueryTypes } from 'sequelize';
 
 export const getDashboardStats = async (_req: Request, res: Response) => {
   try {
@@ -41,7 +41,7 @@ export const getDashboardStats = async (_req: Request, res: Response) => {
        GROUP BY a.id, a.username
        ORDER BY count DESC
        LIMIT 3`,
-      { type: sequelize.QueryTypes.SELECT }
+      { type: QueryTypes.SELECT }
     );
 
     return res.json({

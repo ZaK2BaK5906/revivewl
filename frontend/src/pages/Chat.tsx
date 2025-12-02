@@ -1,5 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { Send, Users, Search, MoreVertical, Smile, Paperclip } from 'lucide-react';
+import { chatAPI } from '../services/api';
+import toast from 'react-hot-toast';
 
 interface Message {
   id: number;
@@ -19,53 +21,27 @@ interface AdminUser {
 const Chat = () => {
   const [message, setMessage] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [messages, setMessages] = useState<Message[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Mock data
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: 1,
-      sender: 'Admin1',
-      content: 'Bonjour à tous! Prêts pour les entretiens aujourd\'hui?',
-      timestamp: new Date(Date.now() - 3600000),
-      isCurrentUser: false,
-    },
-    {
-      id: 2,
-      sender: 'Vous',
-      content: 'Salut! Oui, j\'ai déjà 3 candidats ce matin.',
-      timestamp: new Date(Date.now() - 3500000),
-      isCurrentUser: true,
-    },
-    {
-      id: 3,
-      sender: 'Admin2',
-      content: 'Quelqu\'un peut me donner le template pour les questions Legal?',
-      timestamp: new Date(Date.now() - 3400000),
-      isCurrentUser: false,
-    },
-    {
-      id: 4,
-      sender: 'Vous',
-      content: 'Je te l\'envoie dans 2 min, je le cherche.',
-      timestamp: new Date(Date.now() - 3300000),
-      isCurrentUser: true,
-    },
-    {
-      id: 5,
-      sender: 'Admin3',
-      content: 'N\'oubliez pas de bien valider l\'âge minimum 18 ans!',
-      timestamp: new Date(Date.now() - 3000000),
-      isCurrentUser: false,
-    },
-    {
-      id: 6,
-      sender: 'Admin1',
-      content: 'Bonne remarque! J\'en ai refusé 2 hier pour cette raison.',
-      timestamp: new Date(Date.now() - 2900000),
-      isCurrentUser: false,
-    },
-  ]);
+  useEffect(() => {
+    fetchMessages();
+  }, []);
+
+  const fetchMessages = async () => {
+    try {
+      setLoading(true);
+      const response = await chatAPI.getMessages();
+      setMessages(response.data || []);
+    } catch (error: any) {
+      console.error('Error fetching messages:', error);
+      toast.error('Erreur lors du chargement des messages');
+    } finally {
+      setLoading(false);
+    }
+  };
+
 
   const admins: AdminUser[] = [
     { id: 1, username: 'Vous', status: 'online', role: 'Admin' },
@@ -83,18 +59,17 @@ const Chat = () => {
     scrollToBottom();
   }, [messages]);
 
-  const handleSendMessage = (e: React.FormEvent) => {
+  const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
     if (message.trim()) {
-      const newMessage: Message = {
-        id: messages.length + 1,
-        sender: 'Vous',
-        content: message,
-        timestamp: new Date(),
-        isCurrentUser: true,
-      };
-      setMessages([...messages, newMessage]);
-      setMessage('');
+      try {
+        const response = await chatAPI.sendMessage(message);
+        setMessages([...messages, response.data]);
+        setMessage('');
+      } catch (error: any) {
+        console.error('Error sending message:', error);
+        toast.error('Erreur lors de l\'envoi du message');
+      }
     }
   };
 

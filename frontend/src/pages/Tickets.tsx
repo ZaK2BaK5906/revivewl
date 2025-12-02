@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Plus,
   Search,
@@ -11,6 +11,8 @@ import {
   User,
   Calendar,
 } from 'lucide-react';
+import { ticketAPI } from '../services/api';
+import toast from 'react-hot-toast';
 
 interface Ticket {
   id: number;
@@ -31,60 +33,25 @@ const Tickets = () => {
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [priorityFilter, setPriorityFilter] = useState<string>('all');
   const [isCreating, setIsCreating] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [tickets, setTickets] = useState<Ticket[]>([]);
 
-  const [tickets, setTickets] = useState<Ticket[]>([
-    {
-      id: 1,
-      title: 'Problème de connexion base de données',
-      description: 'Impossible de se connecter à la BDD depuis ce matin',
-      status: 'ouvert',
-      priority: 'urgente',
-      category: 'technique',
-      author: 'Admin2',
-      createdAt: new Date(Date.now() - 3600000),
-      updatedAt: new Date(Date.now() - 1800000),
-      messages: 3,
-    },
-    {
-      id: 2,
-      title: 'Question sur procédure whitelist',
-      description: 'Comment gérer un candidat qui a déjà été refusé?',
-      status: 'en_cours',
-      priority: 'normale',
-      category: 'whitelist',
-      author: 'Admin3',
-      assignedTo: 'Admin1',
-      createdAt: new Date(Date.now() - 7200000),
-      updatedAt: new Date(Date.now() - 900000),
-      messages: 5,
-    },
-    {
-      id: 3,
-      title: 'Mise à jour des templates',
-      description: 'Besoin de mettre à jour les questions pour la catégorie Illégal',
-      status: 'fermé',
-      priority: 'basse',
-      category: 'autre',
-      author: 'Admin1',
-      assignedTo: 'Admin1',
-      createdAt: new Date(Date.now() - 86400000),
-      updatedAt: new Date(Date.now() - 3600000),
-      messages: 8,
-    },
-    {
-      id: 4,
-      title: 'Erreur lors de la validation',
-      description: 'Bug lors de la validation finale d\'une whitelist',
-      status: 'en_cours',
-      priority: 'haute',
-      category: 'technique',
-      author: 'Admin4',
-      assignedTo: 'Vous',
-      createdAt: new Date(Date.now() - 10800000),
-      updatedAt: new Date(Date.now() - 600000),
-      messages: 2,
-    },
-  ]);
+  useEffect(() => {
+    fetchTickets();
+  }, []);
+
+  const fetchTickets = async () => {
+    try {
+      setLoading(true);
+      const response = await ticketAPI.getAll();
+      setTickets(response.data || []);
+    } catch (error: any) {
+      console.error('Error fetching tickets:', error);
+      toast.error('Erreur lors du chargement des tickets');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const [newTicket, setNewTicket] = useState({
     title: '',
@@ -164,23 +131,23 @@ const Tickets = () => {
     fermé: tickets.filter((t) => t.status === 'fermé').length,
   };
 
-  const handleCreateTicket = () => {
+  const handleCreateTicket = async () => {
     if (newTicket.title.trim() && newTicket.description.trim()) {
-      const ticket: Ticket = {
-        id: tickets.length + 1,
-        title: newTicket.title,
-        description: newTicket.description,
-        status: 'ouvert',
-        priority: newTicket.priority as any,
-        category: newTicket.category as any,
-        author: 'Vous',
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        messages: 0,
-      };
-      setTickets([ticket, ...tickets]);
-      setNewTicket({ title: '', description: '', priority: 'normale', category: 'technique' });
-      setIsCreating(false);
+      try {
+        const response = await ticketAPI.create({
+          title: newTicket.title,
+          description: newTicket.description,
+          priority: newTicket.priority,
+          category: newTicket.category,
+        });
+        setTickets([response.data, ...tickets]);
+        setNewTicket({ title: '', description: '', priority: 'normale', category: 'technique' });
+        setIsCreating(false);
+        toast.success('Ticket créé avec succès');
+      } catch (error: any) {
+        console.error('Error creating ticket:', error);
+        toast.error('Erreur lors de la création du ticket');
+      }
     }
   };
 

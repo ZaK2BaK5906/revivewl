@@ -1,6 +1,12 @@
 import { Request, Response } from 'express';
 import { Scenario, RuleQuestion, LexiconQuestion } from '../models/Template';
 
+// Helper: Convert category name to category_id
+const getCategoryIdFromName = (categoryName: string): number => {
+  // Based on SQL: 1 = Legal, 2 = Illégal
+  return categoryName === 'Legal' ? 1 : 2;
+};
+
 // Scenarios
 export const getAllScenarios = async (_req: Request, res: Response) => {
   try {
@@ -16,7 +22,19 @@ export const getAllScenarios = async (_req: Request, res: Response) => {
 
 export const createScenario = async (req: Request, res: Response) => {
   try {
-    const scenario = await Scenario.create(req.body);
+    const { title, description, expectedAnswer, category } = req.body;
+
+    // Transform frontend data to backend format
+    const scenarioData = {
+      title,
+      description,
+      expected_answer: expectedAnswer, // camelCase → snake_case
+      category_id: category ? getCategoryIdFromName(category) : 1, // Convert name to ID
+      points: 10, // Default value
+      is_active: true, // Default value
+    };
+
+    const scenario = await Scenario.create(scenarioData);
     return res.status(201).json(scenario);
   } catch (error: any) {
     console.error('Error creating scenario:', error);
@@ -33,7 +51,16 @@ export const updateScenario = async (req: Request, res: Response) => {
       return res.status(404).json({ error: 'Scenario not found' });
     }
 
-    await scenario.update(req.body);
+    // Transform frontend data if present
+    const updateData: any = {};
+    if (req.body.title) updateData.title = req.body.title;
+    if (req.body.description) updateData.description = req.body.description;
+    if (req.body.expectedAnswer) updateData.expected_answer = req.body.expectedAnswer;
+    if (req.body.category) updateData.category_id = getCategoryIdFromName(req.body.category);
+    if (req.body.points !== undefined) updateData.points = req.body.points;
+    if (req.body.is_active !== undefined) updateData.is_active = req.body.is_active;
+
+    await scenario.update(updateData);
     return res.json(scenario);
   } catch (error: any) {
     console.error('Error updating scenario:', error);
@@ -73,8 +100,19 @@ export const getAllRuleQuestions = async (_req: Request, res: Response) => {
 
 export const createRuleQuestion = async (req: Request, res: Response) => {
   try {
-    const question = await RuleQuestion.create(req.body);
-    return res.status(201).json(question);
+    const { question, answer, points, category } = req.body;
+
+    // Transform frontend data to backend format
+    const questionData = {
+      question,
+      correct_answer: answer, // 'answer' → 'correct_answer'
+      category_id: category ? getCategoryIdFromName(category) : null,
+      points: points || 5,
+      is_active: true,
+    };
+
+    const ruleQuestion = await RuleQuestion.create(questionData);
+    return res.status(201).json(ruleQuestion);
   } catch (error: any) {
     console.error('Error creating rule question:', error);
     return res.status(500).json({ error: 'Failed to create rule question' });
@@ -90,7 +128,15 @@ export const updateRuleQuestion = async (req: Request, res: Response) => {
       return res.status(404).json({ error: 'Rule question not found' });
     }
 
-    await question.update(req.body);
+    // Transform frontend data if present
+    const updateData: any = {};
+    if (req.body.question) updateData.question = req.body.question;
+    if (req.body.answer) updateData.correct_answer = req.body.answer;
+    if (req.body.category) updateData.category_id = getCategoryIdFromName(req.body.category);
+    if (req.body.points !== undefined) updateData.points = req.body.points;
+    if (req.body.is_active !== undefined) updateData.is_active = req.body.is_active;
+
+    await question.update(updateData);
     return res.json(question);
   } catch (error: any) {
     console.error('Error updating rule question:', error);
@@ -130,8 +176,19 @@ export const getAllLexiconQuestions = async (_req: Request, res: Response) => {
 
 export const createLexiconQuestion = async (req: Request, res: Response) => {
   try {
-    const question = await LexiconQuestion.create(req.body);
-    return res.status(201).json(question);
+    const { question, answer, points, category } = req.body;
+
+    // Transform frontend data to backend format
+    const questionData = {
+      question,
+      correct_answer: answer, // 'answer' → 'correct_answer'
+      category_id: category ? getCategoryIdFromName(category) : null,
+      points: points || 5,
+      is_active: true,
+    };
+
+    const lexiconQuestion = await LexiconQuestion.create(questionData);
+    return res.status(201).json(lexiconQuestion);
   } catch (error: any) {
     console.error('Error creating lexicon question:', error);
     return res.status(500).json({ error: 'Failed to create lexicon question' });
@@ -147,7 +204,15 @@ export const updateLexiconQuestion = async (req: Request, res: Response) => {
       return res.status(404).json({ error: 'Lexicon question not found' });
     }
 
-    await question.update(req.body);
+    // Transform frontend data if present
+    const updateData: any = {};
+    if (req.body.question) updateData.question = req.body.question;
+    if (req.body.answer) updateData.correct_answer = req.body.answer;
+    if (req.body.category) updateData.category_id = getCategoryIdFromName(req.body.category);
+    if (req.body.points !== undefined) updateData.points = req.body.points;
+    if (req.body.is_active !== undefined) updateData.is_active = req.body.is_active;
+
+    await question.update(updateData);
     return res.json(question);
   } catch (error: any) {
     console.error('Error updating lexicon question:', error);

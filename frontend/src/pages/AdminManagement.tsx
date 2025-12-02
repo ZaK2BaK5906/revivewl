@@ -6,7 +6,6 @@ import {
   Trash2,
   Shield,
   Crown,
-  Key,
   Mail,
   User,
   CheckCircle,
@@ -20,7 +19,6 @@ interface Admin {
   username: string;
   email: string;
   role: 'Master Admin' | 'Admin' | 'Modérateur';
-  twoFactorEnabled: boolean;
   createdAt: Date;
   lastLogin: Date;
   permissions: {
@@ -52,7 +50,6 @@ const AdminManagement = () => {
       username: 'MasterAdmin',
       email: 'master@revive-rp.local',
       role: 'Master Admin',
-      twoFactorEnabled: true,
       createdAt: new Date('2024-01-01'),
       lastLogin: new Date(),
       permissions: {
@@ -77,7 +74,6 @@ const AdminManagement = () => {
       username: 'Admin1',
       email: 'admin1@revive-rp.local',
       role: 'Admin',
-      twoFactorEnabled: true,
       createdAt: new Date('2024-02-15'),
       lastLogin: new Date(Date.now() - 3600000),
       permissions: {
@@ -102,7 +98,6 @@ const AdminManagement = () => {
       username: 'Moderator1',
       email: 'mod1@revive-rp.local',
       role: 'Modérateur',
-      twoFactorEnabled: false,
       createdAt: new Date('2024-03-01'),
       lastLogin: new Date(Date.now() - 7200000),
       permissions: {
@@ -207,7 +202,6 @@ const AdminManagement = () => {
         username: newAdmin.username,
         email: newAdmin.email,
         role: newAdmin.role as any,
-        twoFactorEnabled: false,
         createdAt: new Date(),
         lastLogin: new Date(),
         permissions: {
@@ -435,12 +429,6 @@ const AdminManagement = () => {
                       {getRoleIcon(admin.role)}
                       {admin.role}
                     </span>
-                    {admin.twoFactorEnabled && (
-                      <span className="px-2 py-1 rounded-lg text-xs font-medium bg-green-500/20 text-green-400 flex items-center gap-1">
-                        <Key className="w-3 h-3" />
-                        2FA
-                      </span>
-                    )}
                   </div>
                   <div className="flex items-center gap-4 text-sm text-muted-foreground">
                     <span className="flex items-center gap-1">

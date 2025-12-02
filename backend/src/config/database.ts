@@ -11,6 +11,11 @@ const sequelize = new Sequelize({
   password: process.env.DB_PASSWORD || '',
   dialect: 'mysql',
   logging: process.env.NODE_ENV === 'development' ? console.log : false,
+  dialectOptions: {
+    authPlugins: {
+      mysql_native_password: () => () => require('mysql2/lib/auth_plugins').mysql_native_password,
+    },
+  },
   pool: {
     max: 10,
     min: 0,

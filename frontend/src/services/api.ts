@@ -113,9 +113,11 @@ export const adminAPI = {
 export const chatAPI = {
   getMessages: (params?: any) => api.get('/chat/messages', { params }),
 
-  sendMessage: (content: string) => api.post('/chat/messages', { content }),
+  sendMessage: (message: string, room?: string) => api.post('/chat/messages', { message, room }),
 
   deleteMessage: (id: number) => api.delete(`/chat/messages/${id}`),
+
+  getOnlineAdmins: () => api.get('/chat/admins'),
 };
 
 // Ticket API

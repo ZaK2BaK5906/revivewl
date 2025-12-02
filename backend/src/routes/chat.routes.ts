@@ -3,6 +3,7 @@ import {
   getAllMessages,
   sendMessage,
   deleteMessage,
+  getOnlineAdmins,
 } from '../controllers/chat.controller';
 import { authenticate } from '../middleware/auth';
 
@@ -14,5 +15,6 @@ router.use(authenticate);
 router.get('/messages', getAllMessages);
 router.post('/messages', sendMessage);
 router.delete('/messages/:id', deleteMessage);
+router.get('/admins', getOnlineAdmins);
 
 export default router;

@@ -23,17 +23,24 @@ const Chat = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(true);
   const [messages, setMessages] = useState<Message[]>([]);
+  const [admins, setAdmins] = useState<AdminUser[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     fetchMessages();
+    fetchAdmins();
   }, []);
 
   const fetchMessages = async () => {
     try {
       setLoading(true);
       const response = await chatAPI.getMessages();
-      setMessages(response.data || []);
+      // Convert timestamp strings to Date objects
+      const messagesWithDates = (response.data || []).map((msg: any) => ({
+        ...msg,
+        timestamp: new Date(msg.timestamp),
+      }));
+      setMessages(messagesWithDates);
     } catch (error: any) {
       console.error('Error fetching messages:', error);
       toast.error('Erreur lors du chargement des messages');
@@ -42,14 +49,15 @@ const Chat = () => {
     }
   };
 
-
-  const admins: AdminUser[] = [
-    { id: 1, username: 'Vous', status: 'online', role: 'Admin' },
-    { id: 2, username: 'Admin1', status: 'online', role: 'Master Admin' },
-    { id: 3, username: 'Admin2', status: 'online', role: 'Admin' },
-    { id: 4, username: 'Admin3', status: 'away', role: 'Admin' },
-    { id: 5, username: 'Admin4', status: 'offline', role: 'Modérateur' },
-  ];
+  const fetchAdmins = async () => {
+    try {
+      const response = await chatAPI.getOnlineAdmins();
+      setAdmins(response.data || []);
+    } catch (error: any) {
+      console.error('Error fetching admins:', error);
+      toast.error('Erreur lors du chargement des administrateurs');
+    }
+  };
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -64,7 +72,12 @@ const Chat = () => {
     if (message.trim()) {
       try {
         const response = await chatAPI.sendMessage(message);
-        setMessages([...messages, response.data]);
+        // Convert timestamp to Date object
+        const newMessage = {
+          ...response.data,
+          timestamp: new Date(response.data.timestamp),
+        };
+        setMessages([...messages, newMessage]);
         setMessage('');
       } catch (error: any) {
         console.error('Error sending message:', error);

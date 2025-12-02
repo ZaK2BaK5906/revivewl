@@ -129,3 +129,59 @@ export const deleteWhitelist = async (req: Request, res: Response) => {
     return res.status(500).json({ error: 'Failed to delete whitelist' });
   }
 };
+
+// Validate (confirm) a whitelist
+export const validateWhitelist = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const { validationComment } = req.body;
+
+    const whitelist = await Whitelist.findByPk(id);
+
+    if (!whitelist) {
+      return res.status(404).json({ error: 'Whitelist not found' });
+    }
+
+    // Update whitelist status to validated (French: 'validée')
+    await whitelist.update({
+      status: 'validée',
+      final_decision: 'validée',
+      validation_comment: validationComment || '',
+    });
+
+    return res.json(whitelist);
+  } catch (error: any) {
+    console.error('Error validating whitelist:', error);
+    return res.status(500).json({ error: 'Failed to validate whitelist' });
+  }
+};
+
+// Refuse a whitelist
+export const refuseWhitelist = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const { refusalReason } = req.body;
+
+    const whitelist = await Whitelist.findByPk(id);
+
+    if (!whitelist) {
+      return res.status(404).json({ error: 'Whitelist not found' });
+    }
+
+    if (!refusalReason || refusalReason.trim() === '') {
+      return res.status(400).json({ error: 'Refusal reason is required' });
+    }
+
+    // Update whitelist status to refused (French: 'refusée')
+    await whitelist.update({
+      status: 'refusée',
+      final_decision: 'refusée',
+      refusal_reason: refusalReason,
+    });
+
+    return res.json(whitelist);
+  } catch (error: any) {
+    console.error('Error refusing whitelist:', error);
+    return res.status(500).json({ error: 'Failed to refuse whitelist' });
+  }
+};

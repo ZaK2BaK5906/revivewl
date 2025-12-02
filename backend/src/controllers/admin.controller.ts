@@ -246,3 +246,50 @@ export const updatePermissions = async (req: Request, res: Response) => {
     return res.status(500).json({ error: 'Failed to update permissions' });
   }
 };
+
+// Update own profile (username and/or password)
+export const updateOwnProfile = async (req: Request, res: Response) => {
+  try {
+    const currentAdmin = (req as any).admin;
+    const { username, password, currentPassword } = req.body;
+
+    const admin = await Admin.findByPk(currentAdmin.id);
+
+    if (!admin) {
+      return res.status(404).json({ error: 'Admin not found' });
+    }
+
+    // If changing password, verify current password first
+    if (password) {
+      if (!currentPassword) {
+        return res.status(400).json({ error: 'Current password is required to change password' });
+      }
+
+      const isPasswordValid = await bcrypt.compare(currentPassword, admin.password_hash);
+      if (!isPasswordValid) {
+        return res.status(401).json({ error: 'Current password is incorrect' });
+      }
+
+      // Hash new password
+      const hashedPassword = await bcrypt.hash(password, parseInt(process.env.BCRYPT_ROUNDS || '12'));
+      await admin.update({ password_hash: hashedPassword });
+    }
+
+    // Update username if provided
+    if (username && username !== admin.username) {
+      // Check if username is already taken
+      const existingAdmin = await Admin.findOne({ where: { username } });
+      if (existingAdmin && existingAdmin.id !== admin.id) {
+        return res.status(400).json({ error: 'Username already taken' });
+      }
+
+      await admin.update({ username });
+    }
+
+    const transformedAdmin = await transformAdminForFrontend(admin);
+    return res.json(transformedAdmin);
+  } catch (error: any) {
+    console.error('Error updating own profile:', error);
+    return res.status(500).json({ error: 'Failed to update profile' });
+  }
+};

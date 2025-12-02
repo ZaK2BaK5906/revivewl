@@ -94,7 +94,11 @@ export const getAllTickets = async (req: Request, res: Response) => {
         ]
       },
       group: ['Ticket.id'],
-      order: [['created_at', 'DESC']],
+      // Order by priority first (Urgente -> Haute -> Normale -> Basse), then by date
+      order: [
+        [Admin.sequelize!.literal("FIELD(priority, 'Urgente', 'Haute', 'Normale', 'Basse')"), 'ASC'],
+        ['created_at', 'DESC']
+      ],
       raw: false,
       subQuery: false,
     });

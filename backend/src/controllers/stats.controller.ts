@@ -33,25 +33,16 @@ export const getDashboardStats = async (_req: Request, res: Response) => {
       order: [['created_at', 'DESC']],
     });
 
-    // Top admins (by whitelist count)
-    const topAdmins = await Admin.findAll({
-      attributes: [
-        'id',
-        'username',
-        [sequelize.fn('COUNT', sequelize.col('whitelists.id')), 'count'],
-      ],
-      include: [
-        {
-          model: Whitelist,
-          as: 'whitelists',
-          attributes: [],
-        },
-      ],
-      group: ['Admin.id'],
-      order: [[sequelize.literal('count'), 'DESC']],
-      limit: 3,
-      raw: true,
-    });
+    // Top admins (by whitelist count) - Use subquery to avoid raw query issues
+    const topAdminsRaw = await sequelize.query(
+      `SELECT a.id, a.username, COUNT(w.id) as count
+       FROM admins a
+       LEFT JOIN whitelists w ON a.id = w.admin_id
+       GROUP BY a.id, a.username
+       ORDER BY count DESC
+       LIMIT 3`,
+      { type: sequelize.QueryTypes.SELECT }
+    );
 
     return res.json({
       stats: {
@@ -64,7 +55,7 @@ export const getDashboardStats = async (_req: Request, res: Response) => {
         successRate,
       },
       recentWhitelists,
-      topAdmins,
+      topAdmins: topAdminsRaw,
     });
   } catch (error: any) {
     console.error('Error fetching dashboard stats:', error);

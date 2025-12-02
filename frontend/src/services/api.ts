@@ -58,6 +58,12 @@ export const whitelistAPI = {
 
   update: (id: number, data: any) => api.put(`/whitelists/${id}`, data),
 
+  validate: (id: number, validationComment?: string) =>
+    api.post(`/whitelists/${id}/validate`, { validationComment }),
+
+  refuse: (id: number, refusalReason: string) =>
+    api.post(`/whitelists/${id}/refuse`, { refusalReason }),
+
   delete: (id: number) => api.delete(`/whitelists/${id}`),
 
   getStats: () => api.get('/whitelists/stats'),
@@ -102,6 +108,9 @@ export const adminAPI = {
   create: (data: any) => api.post('/admins', data),
 
   update: (id: number, data: any) => api.put(`/admins/${id}`, data),
+
+  updateOwnProfile: (data: { username?: string; password?: string; currentPassword?: string }) =>
+    api.put('/admins/me/profile', data),
 
   delete: (id: number) => api.delete(`/admins/${id}`),
 

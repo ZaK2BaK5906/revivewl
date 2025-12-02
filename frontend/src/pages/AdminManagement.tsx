@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Plus,
   Search,
@@ -13,6 +13,8 @@ import {
   Save,
   X,
 } from 'lucide-react';
+import { adminAPI } from '../services/api';
+import toast from 'react-hot-toast';
 
 interface Admin {
   id: number;
@@ -43,81 +45,25 @@ const AdminManagement = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [isCreating, setIsCreating] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [admins, setAdmins] = useState<Admin[]>([]);
 
-  const [admins, setAdmins] = useState<Admin[]>([
-    {
-      id: 1,
-      username: 'MasterAdmin',
-      email: 'master@revive-rp.local',
-      role: 'Master Admin',
-      createdAt: new Date('2024-01-01'),
-      lastLogin: new Date(),
-      permissions: {
-        whitelistCreate: true,
-        whitelistEdit: true,
-        whitelistDelete: true,
-        whitelistView: true,
-        templateManage: true,
-        adminManage: true,
-        chatAccess: true,
-        ticketManage: true,
-        settingsManage: true,
-        rulesEdit: true,
-        statisticsView: true,
-        backupManage: true,
-        webhookManage: true,
-        logsView: true,
-      },
-    },
-    {
-      id: 2,
-      username: 'Admin1',
-      email: 'admin1@revive-rp.local',
-      role: 'Admin',
-      createdAt: new Date('2024-02-15'),
-      lastLogin: new Date(Date.now() - 3600000),
-      permissions: {
-        whitelistCreate: true,
-        whitelistEdit: true,
-        whitelistDelete: false,
-        whitelistView: true,
-        templateManage: true,
-        adminManage: false,
-        chatAccess: true,
-        ticketManage: true,
-        settingsManage: false,
-        rulesEdit: true,
-        statisticsView: true,
-        backupManage: false,
-        webhookManage: false,
-        logsView: true,
-      },
-    },
-    {
-      id: 3,
-      username: 'Moderator1',
-      email: 'mod1@revive-rp.local',
-      role: 'Modérateur',
-      createdAt: new Date('2024-03-01'),
-      lastLogin: new Date(Date.now() - 7200000),
-      permissions: {
-        whitelistCreate: true,
-        whitelistEdit: false,
-        whitelistDelete: false,
-        whitelistView: true,
-        templateManage: false,
-        adminManage: false,
-        chatAccess: true,
-        ticketManage: false,
-        settingsManage: false,
-        rulesEdit: false,
-        statisticsView: true,
-        backupManage: false,
-        webhookManage: false,
-        logsView: false,
-      },
-    },
-  ]);
+  useEffect(() => {
+    fetchAdmins();
+  }, []);
+
+  const fetchAdmins = async () => {
+    try {
+      setLoading(true);
+      const response = await adminAPI.getAll();
+      setAdmins(response.data || []);
+    } catch (error: any) {
+      console.error('Error fetching admins:', error);
+      toast.error('Erreur lors du chargement des administrateurs');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const [newAdmin, setNewAdmin] = useState({
     username: '',
@@ -195,58 +141,73 @@ const AdminManagement = () => {
       admin.email.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const handleCreateAdmin = () => {
+  const handleCreateAdmin = async () => {
     if (newAdmin.username.trim() && newAdmin.email.trim() && newAdmin.password.trim()) {
-      const admin: Admin = {
-        id: admins.length + 1,
-        username: newAdmin.username,
-        email: newAdmin.email,
-        role: newAdmin.role as any,
-        createdAt: new Date(),
-        lastLogin: new Date(),
-        permissions: {
-          whitelistCreate: true,
-          whitelistEdit: false,
-          whitelistDelete: false,
-          whitelistView: true,
-          templateManage: false,
-          adminManage: false,
-          chatAccess: true,
-          ticketManage: false,
-          settingsManage: false,
-          rulesEdit: false,
-          statisticsView: true,
-          backupManage: false,
-          webhookManage: false,
-          logsView: false,
-        },
-      };
-      setAdmins([...admins, admin]);
-      setNewAdmin({ username: '', email: '', password: '', role: 'Modérateur' });
-      setIsCreating(false);
+      try {
+        const response = await adminAPI.create({
+          username: newAdmin.username,
+          email: newAdmin.email,
+          password: newAdmin.password,
+          role: newAdmin.role,
+        });
+        setAdmins([...admins, response.data]);
+        setNewAdmin({ username: '', email: '', password: '', role: 'Modérateur' });
+        setIsCreating(false);
+        toast.success('Administrateur créé avec succès');
+      } catch (error: any) {
+        console.error('Error creating admin:', error);
+        toast.error('Erreur lors de la création de l\'administrateur');
+      }
     }
   };
 
-  const handleDeleteAdmin = (id: number) => {
-    setAdmins(admins.filter((a) => a.id !== id));
+  const handleDeleteAdmin = async (id: number) => {
+    try {
+      await adminAPI.delete(id);
+      setAdmins(admins.filter((a) => a.id !== id));
+      toast.success('Administrateur supprimé');
+    } catch (error: any) {
+      console.error('Error deleting admin:', error);
+      toast.error('Erreur lors de la suppression');
+    }
   };
 
-  const togglePermission = (adminId: number, permission: keyof Admin['permissions']) => {
-    setAdmins(
-      admins.map((admin) => {
-        if (admin.id === adminId) {
-          return {
-            ...admin,
-            permissions: {
-              ...admin.permissions,
-              [permission]: !admin.permissions[permission],
-            },
-          };
-        }
-        return admin;
-      })
-    );
+  const togglePermission = async (adminId: number, permission: keyof Admin['permissions']) => {
+    const admin = admins.find((a) => a.id === adminId);
+    if (!admin) return;
+
+    const updatedPermissions = {
+      ...admin.permissions,
+      [permission]: !admin.permissions[permission],
+    };
+
+    try {
+      await adminAPI.updatePermissions(adminId, updatedPermissions);
+      setAdmins(
+        admins.map((a) => {
+          if (a.id === adminId) {
+            return { ...a, permissions: updatedPermissions };
+          }
+          return a;
+        })
+      );
+      toast.success('Permission mise à jour');
+    } catch (error: any) {
+      console.error('Error updating permissions:', error);
+      toast.error('Erreur lors de la mise à jour des permissions');
+    }
   };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-96">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Chargement des administrateurs...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">

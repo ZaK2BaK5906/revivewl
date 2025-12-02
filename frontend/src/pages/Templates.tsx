@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Plus,
   Edit,
@@ -11,6 +11,8 @@ import {
   X,
   AlertCircle,
 } from 'lucide-react';
+import { templateAPI } from '../services/api';
+import toast from 'react-hot-toast';
 
 type TemplateType = 'scenarios' | 'rules' | 'lexicon';
 
@@ -35,78 +37,35 @@ const Templates = () => {
   const [activeTab, setActiveTab] = useState<TemplateType>('scenarios');
   const [isAdding, setIsAdding] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  // Mock scenarios
-  const [scenarios, setScenarios] = useState<Scenario[]>([
-    {
-      id: 1,
-      title: 'Contrôle Routier',
-      description: 'Vous êtes arrêté par la police pour un contrôle routier. Comment réagissez-vous?',
-      expectedAnswer: 'Se garer en sécurité, baisser la vitre, garder les mains visibles, saluer poliment l\'officier et attendre ses instructions.',
-      category: 'Legal',
-      difficulty: 'Facile',
-    },
-    {
-      id: 2,
-      title: 'Braquage de Banque',
-      description: 'Vous planifiez un braquage de banque avec votre gang. Expliquez votre plan.',
-      expectedAnswer: 'Planification détaillée, rôles définis, gestion des otages sans violence excessive, plan de fuite, respect du RP.',
-      category: 'Illégal',
-      difficulty: 'Difficile',
-    },
-    {
-      id: 3,
-      title: 'Négociation EMS',
-      description: 'Vous êtes médecin et devez négocier avec un patient agressif.',
-      expectedAnswer: 'Rester calme, dialogue pour comprendre la raison, appeler la sécurité si nécessaire, prioriser la sécurité.',
-      category: 'Legal',
-      difficulty: 'Moyen',
-    },
-  ]);
+  const [scenarios, setScenarios] = useState<Scenario[]>([]);
+  const [ruleQuestions, setRuleQuestions] = useState<Question[]>([]);
+  const [lexiconQuestions, setLexiconQuestions] = useState<Question[]>([]);
 
-  // Mock rule questions
-  const [ruleQuestions, setRuleQuestions] = useState<Question[]>([
-    {
-      id: 1,
-      question: 'Qu\'est-ce qu\'une zone safe?',
-      answer: 'Une zone où aucune action RP violente (braquage, meurtre, etc.) n\'est autorisée. Exemples: Hôpital, Commissariat.',
-      points: 5,
-    },
-    {
-      id: 2,
-      question: 'Peut-on tuer sans raison RP valable?',
-      answer: 'Non, c\'est du RDM (Random Death Match) et c\'est strictement interdit.',
-      points: 5,
-    },
-    {
-      id: 3,
-      question: 'Qu\'est-ce que le PowerGaming?',
-      answer: 'C\'est le fait de forcer une action RP sans laisser de choix à l\'autre joueur ou d\'utiliser des informations HRP en RP.',
-      points: 5,
-    },
-  ]);
+  useEffect(() => {
+    fetchTemplates();
+  }, []);
 
-  // Mock lexicon questions
-  const [lexiconQuestions, setLexiconQuestions] = useState<Question[]>([
-    {
-      id: 1,
-      question: 'Que signifie "RDM"?',
-      answer: 'Random Death Match - Tuer quelqu\'un sans raison RP valable.',
-      points: 5,
-    },
-    {
-      id: 2,
-      question: 'Que signifie "VDM"?',
-      answer: 'Vehicle Death Match - Écraser quelqu\'un volontairement sans raison RP.',
-      points: 5,
-    },
-    {
-      id: 3,
-      question: 'Que signifie "HRP" et "RP"?',
-      answer: 'HRP = Hors RolePlay (vie réelle), RP = RolePlay (personnage dans le jeu).',
-      points: 5,
-    },
-  ]);
+  const fetchTemplates = async () => {
+    try {
+      setLoading(true);
+      const [scenariosRes, rulesRes, lexiconRes] = await Promise.all([
+        templateAPI.getScenarios(),
+        templateAPI.getRuleQuestions(),
+        templateAPI.getLexiconQuestions(),
+      ]);
+
+      setScenarios(scenariosRes.data || []);
+      setRuleQuestions(rulesRes.data || []);
+      setLexiconQuestions(lexiconRes.data || []);
+    } catch (error: any) {
+      console.error('Error fetching templates:', error);
+      toast.error('Erreur lors du chargement des templates');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const [newScenario, setNewScenario] = useState<Partial<Scenario>>({
     category: 'Legal',
@@ -117,54 +76,97 @@ const Templates = () => {
     points: 5,
   });
 
-  const handleAddScenario = () => {
+  const handleAddScenario = async () => {
     if (newScenario.title && newScenario.description && newScenario.expectedAnswer) {
-      setScenarios([
-        ...scenarios,
-        {
-          id: Date.now(),
+      try {
+        const response = await templateAPI.createScenario({
           title: newScenario.title,
           description: newScenario.description,
           expectedAnswer: newScenario.expectedAnswer,
-          category: newScenario.category as 'Legal' | 'Illégal',
-          difficulty: newScenario.difficulty as 'Facile' | 'Moyen' | 'Difficile',
-        },
-      ]);
-      setNewScenario({ category: 'Legal', difficulty: 'Moyen' });
-      setIsAdding(false);
+          category: newScenario.category,
+          difficulty: newScenario.difficulty,
+        });
+        setScenarios([...scenarios, response.data]);
+        setNewScenario({ category: 'Legal', difficulty: 'Moyen' });
+        setIsAdding(false);
+        toast.success('Scénario ajouté avec succès');
+      } catch (error: any) {
+        console.error('Error adding scenario:', error);
+        toast.error('Erreur lors de l\'ajout du scénario');
+      }
     }
   };
 
-  const handleAddQuestion = () => {
+  const handleAddQuestion = async () => {
     if (newQuestion.question && newQuestion.answer) {
-      const questionList = activeTab === 'rules' ? ruleQuestions : lexiconQuestions;
-      const setQuestionList = activeTab === 'rules' ? setRuleQuestions : setLexiconQuestions;
+      try {
+        const apiCall = activeTab === 'rules'
+          ? templateAPI.createRuleQuestion
+          : templateAPI.createLexiconQuestion;
 
-      setQuestionList([
-        ...questionList,
-        {
-          id: Date.now(),
+        const response = await apiCall({
           question: newQuestion.question,
           answer: newQuestion.answer,
           points: newQuestion.points || 5,
-        },
-      ]);
-      setNewQuestion({ points: 5 });
-      setIsAdding(false);
+        });
+
+        if (activeTab === 'rules') {
+          setRuleQuestions([...ruleQuestions, response.data]);
+        } else {
+          setLexiconQuestions([...lexiconQuestions, response.data]);
+        }
+
+        setNewQuestion({ points: 5 });
+        setIsAdding(false);
+        toast.success('Question ajoutée avec succès');
+      } catch (error: any) {
+        console.error('Error adding question:', error);
+        toast.error('Erreur lors de l\'ajout de la question');
+      }
     }
   };
 
-  const handleDeleteScenario = (id: number) => {
-    setScenarios(scenarios.filter((s) => s.id !== id));
-  };
-
-  const handleDeleteQuestion = (id: number) => {
-    if (activeTab === 'rules') {
-      setRuleQuestions(ruleQuestions.filter((q) => q.id !== id));
-    } else {
-      setLexiconQuestions(lexiconQuestions.filter((q) => q.id !== id));
+  const handleDeleteScenario = async (id: number) => {
+    try {
+      await templateAPI.deleteScenario(id);
+      setScenarios(scenarios.filter((s) => s.id !== id));
+      toast.success('Scénario supprimé');
+    } catch (error: any) {
+      console.error('Error deleting scenario:', error);
+      toast.error('Erreur lors de la suppression');
     }
   };
+
+  const handleDeleteQuestion = async (id: number) => {
+    try {
+      const apiCall = activeTab === 'rules'
+        ? templateAPI.deleteRuleQuestion
+        : templateAPI.deleteLexiconQuestion;
+
+      await apiCall(id);
+
+      if (activeTab === 'rules') {
+        setRuleQuestions(ruleQuestions.filter((q) => q.id !== id));
+      } else {
+        setLexiconQuestions(lexiconQuestions.filter((q) => q.id !== id));
+      }
+      toast.success('Question supprimée');
+    } catch (error: any) {
+      console.error('Error deleting question:', error);
+      toast.error('Erreur lors de la suppression');
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-96">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Chargement des templates...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">

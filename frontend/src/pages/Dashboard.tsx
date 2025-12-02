@@ -1,30 +1,44 @@
+import { useState, useEffect } from 'react';
 import { FileText, CheckCircle, XCircle, Clock, TrendingUp, Users, Calendar } from 'lucide-react';
+import { statsAPI, whitelistAPI } from '../services/api';
+import toast from 'react-hot-toast';
 
 const Dashboard = () => {
-  // Mock data - sera remplacé par des vraies données de l'API
-  const stats = {
-    total: 156,
-    validated: 89,
-    refused: 42,
-    pending: 25,
-    todayInterviews: 8,
-    avgDuration: 25,
-    successRate: 68,
+  const [loading, setLoading] = useState(true);
+  const [stats, setStats] = useState({
+    total: 0,
+    validated: 0,
+    refused: 0,
+    pending: 0,
+    todayInterviews: 0,
+    avgDuration: 0,
+    successRate: 0,
+  });
+  const [recentWhitelists, setRecentWhitelists] = useState<any[]>([]);
+  const [topAdmins, setTopAdmins] = useState<any[]>([]);
+
+  useEffect(() => {
+    fetchDashboardData();
+  }, []);
+
+  const fetchDashboardData = async () => {
+    try {
+      setLoading(true);
+      const [dashboardRes, whitelistsRes] = await Promise.all([
+        statsAPI.getDashboard(),
+        whitelistAPI.getAll({ limit: 5, sort: 'createdAt', order: 'DESC' }),
+      ]);
+
+      setStats(dashboardRes.data.stats || stats);
+      setRecentWhitelists(dashboardRes.data.recentWhitelists || []);
+      setTopAdmins(dashboardRes.data.topAdmins || []);
+    } catch (error: any) {
+      console.error('Error fetching dashboard data:', error);
+      toast.error('Erreur lors du chargement des données');
+    } finally {
+      setLoading(false);
+    }
   };
-
-  const recentWhitelists = [
-    { id: 1, name: 'Jean Dupont', status: 'validée', score: 85, time: 'Il y a 10 min', category: 'Legal' },
-    { id: 2, name: 'Marie Martin', status: 'en_attente', score: 72, time: 'Il y a 25 min', category: 'Illégal' },
-    { id: 3, name: 'Pierre Durand', status: 'validée', score: 91, time: 'Il y a 1h', category: 'Legal' },
-    { id: 4, name: 'Sophie Bernard', status: 'refusée', score: 45, time: 'Il y a 2h', category: 'Legal' },
-    { id: 5, name: 'Lucas Petit', status: 'validée', score: 78, time: 'Il y a 3h', category: 'Illégal' },
-  ];
-
-  const topAdmins = [
-    { name: 'Admin1', count: 45, avatar: 'A' },
-    { name: 'Admin2', count: 38, avatar: 'A' },
-    { name: 'Admin3', count: 32, avatar: 'A' },
-  ];
 
   const cards = [
     {
@@ -94,6 +108,17 @@ const Dashboard = () => {
         return status;
     }
   };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-96">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Chargement des données...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">

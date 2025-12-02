@@ -1,111 +1,33 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Search, Filter, Download, Eye, Calendar, User } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { whitelistAPI } from '../services/api';
+import toast from 'react-hot-toast';
 
 const WhitelistHistory = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [categoryFilter, setCategoryFilter] = useState('all');
+  const [loading, setLoading] = useState(true);
+  const [whitelists, setWhitelists] = useState<any[]>([]);
 
-  // Mock data
-  const whitelists = [
-    {
-      id: 1,
-      firstname: 'Jean',
-      lastname: 'Dupont',
-      discord: 'jean#1234',
-      category: 'Legal',
-      status: 'validée',
-      score: 85,
-      admin: 'Admin1',
-      date: '2025-12-01 14:30',
-      duration: 25,
-    },
-    {
-      id: 2,
-      firstname: 'Marie',
-      lastname: 'Martin',
-      discord: 'marie#5678',
-      category: 'Illégal',
-      status: 'en_attente',
-      score: 72,
-      admin: 'Admin2',
-      date: '2025-12-01 13:45',
-      duration: 18,
-    },
-    {
-      id: 3,
-      firstname: 'Pierre',
-      lastname: 'Durand',
-      discord: 'pierre#9012',
-      category: 'Legal',
-      status: 'validée',
-      score: 91,
-      admin: 'Admin1',
-      date: '2025-12-01 12:15',
-      duration: 30,
-    },
-    {
-      id: 4,
-      firstname: 'Sophie',
-      lastname: 'Bernard',
-      discord: 'sophie#3456',
-      category: 'Legal',
-      status: 'refusée',
-      score: 45,
-      admin: 'Admin3',
-      date: '2025-12-01 11:00',
-      duration: 20,
-    },
-    {
-      id: 5,
-      firstname: 'Lucas',
-      lastname: 'Petit',
-      discord: 'lucas#7890',
-      category: 'Illégal',
-      status: 'validée',
-      score: 78,
-      admin: 'Admin2',
-      date: '2025-12-01 10:20',
-      duration: 22,
-    },
-    {
-      id: 6,
-      firstname: 'Emma',
-      lastname: 'Robert',
-      discord: 'emma#2468',
-      category: 'Legal',
-      status: 'validée',
-      score: 88,
-      admin: 'Admin1',
-      date: '2025-11-30 16:45',
-      duration: 28,
-    },
-    {
-      id: 7,
-      firstname: 'Thomas',
-      lastname: 'Moreau',
-      discord: 'thomas#1357',
-      category: 'Illégal',
-      status: 'refusée',
-      score: 52,
-      admin: 'Admin3',
-      date: '2025-11-30 15:30',
-      duration: 15,
-    },
-    {
-      id: 8,
-      firstname: 'Léa',
-      lastname: 'Simon',
-      discord: 'lea#9876',
-      category: 'Legal',
-      status: 'en_attente',
-      score: 68,
-      admin: 'Admin2',
-      date: '2025-11-30 14:00',
-      duration: 19,
-    },
-  ];
+  useEffect(() => {
+    fetchWhitelists();
+  }, []);
+
+  const fetchWhitelists = async () => {
+    try {
+      setLoading(true);
+      const response = await whitelistAPI.getAll();
+      setWhitelists(response.data || []);
+    } catch (error: any) {
+      console.error('Error fetching whitelists:', error);
+      toast.error('Erreur lors du chargement des whitelists');
+    } finally {
+      setLoading(false);
+    }
+  };
+
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -153,6 +75,17 @@ const WhitelistHistory = () => {
     refused: whitelists.filter((w) => w.status === 'refusée').length,
     pending: whitelists.filter((w) => w.status === 'en_attente').length,
   };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-96">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Chargement des whitelists...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">

@@ -5,8 +5,8 @@ import {
   createWhitelist,
   updateWhitelist,
   deleteWhitelist,
-  getWhitelistStats,
 } from '../controllers/whitelist.controller';
+import { getWhitelistStats } from '../controllers/stats.controller';
 import { authenticate } from '../middleware/auth';
 
 const router = express.Router();

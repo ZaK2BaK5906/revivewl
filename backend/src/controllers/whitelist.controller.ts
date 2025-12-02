@@ -1,12 +1,42 @@
 import { Request, Response } from 'express';
 import Whitelist from '../models/Whitelist';
 
+// Mapping from frontend field names (camelCase) to database column names (snake_case)
+const fieldMapping: { [key: string]: string } = {
+  createdAt: 'created_at',
+  updatedAt: 'updated_at',
+  candidateFirstname: 'candidate_firstname',
+  candidateLastname: 'candidate_lastname',
+  discordUsername: 'discord_username',
+  experienceLevel: 'experience_level',
+  rpHours: 'rp_hours',
+  categoryId: 'category_id',
+  adminId: 'admin_id',
+  totalScore: 'total_score',
+  scenarioScore: 'scenario_score',
+  questionsScore: 'questions_score',
+  autoSuggestion: 'auto_suggestion',
+  finalDecision: 'final_decision',
+  validationComment: 'validation_comment',
+  refusalReason: 'refusal_reason',
+  pendingReason: 'pending_reason',
+  reexamDate: 'reexam_date',
+  isTemporaryRefusal: 'is_temporary_refusal',
+  interviewStart: 'interview_start',
+  interviewEnd: 'interview_end',
+  interviewDuration: 'interview_duration',
+  adminNotes: 'admin_notes',
+};
+
 export const getAllWhitelists = async (req: Request, res: Response) => {
   try {
     const { limit, sort, order, status, category } = req.query;
 
+    // Convert frontend field name to database column name
+    const sortField = sort ? (fieldMapping[sort as string] || sort) : 'created_at';
+
     const queryOptions: any = {
-      order: [[sort as string || 'created_at', order as string || 'DESC']],
+      order: [[sortField as string, order as string || 'DESC']],
     };
 
     if (limit) {
@@ -15,7 +45,7 @@ export const getAllWhitelists = async (req: Request, res: Response) => {
 
     const where: any = {};
     if (status) where.status = status;
-    if (category) where.category = category;
+    if (category) where.category_id = category;
 
     queryOptions.where = where;
 
@@ -50,11 +80,13 @@ export const createWhitelist = async (req: Request, res: Response) => {
     // Age validation
     if (whitelistData.age < 18) {
       return res.status(400).json({
-        error: 'Le candidat doit avoir au moins 18 ans',
-        status: 'refused',
-        reason: 'age_restriction'
+        error: 'Age minimum requis : 18 ans',
+        auto_refuse: true,
       });
     }
+
+    const admin = (req as any).admin;
+    whitelistData.admin_id = admin.id;
 
     const whitelist = await Whitelist.create(whitelistData);
     return res.status(201).json(whitelist);
@@ -67,14 +99,13 @@ export const createWhitelist = async (req: Request, res: Response) => {
 export const updateWhitelist = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const updateData = req.body;
-
     const whitelist = await Whitelist.findByPk(id);
+
     if (!whitelist) {
       return res.status(404).json({ error: 'Whitelist not found' });
     }
 
-    await whitelist.update(updateData);
+    await whitelist.update(req.body);
     return res.json(whitelist);
   } catch (error: any) {
     console.error('Error updating whitelist:', error);
@@ -96,24 +127,5 @@ export const deleteWhitelist = async (req: Request, res: Response) => {
   } catch (error: any) {
     console.error('Error deleting whitelist:', error);
     return res.status(500).json({ error: 'Failed to delete whitelist' });
-  }
-};
-
-export const getWhitelistStats = async (_req: Request, res: Response) => {
-  try {
-    const total = await Whitelist.count();
-    const validated = await Whitelist.count({ where: { status: 'validated' } });
-    const refused = await Whitelist.count({ where: { status: 'refused' } });
-    const pending = await Whitelist.count({ where: { status: 'pending' } });
-
-    return res.json({
-      total,
-      validated,
-      refused,
-      pending,
-    });
-  } catch (error: any) {
-    console.error('Error fetching whitelist stats:', error);
-    return res.status(500).json({ error: 'Failed to fetch whitelist stats' });
   }
 };

@@ -6,11 +6,11 @@ import { Op } from 'sequelize';
 
 export const getDashboardStats = async (_req: Request, res: Response) => {
   try {
-    // Whitelist stats
+    // Whitelist stats - IMPORTANT: Use French status values from DB
     const total = await Whitelist.count();
-    const validated = await Whitelist.count({ where: { status: 'validated' } });
-    const refused = await Whitelist.count({ where: { status: 'refused' } });
-    const pending = await Whitelist.count({ where: { status: 'pending' } });
+    const validated = await Whitelist.count({ where: { status: 'validée' } });
+    const refused = await Whitelist.count({ where: { status: 'refusée' } });
+    const pending = await Whitelist.count({ where: { status: 'en_attente' } });
 
     // Today's interviews
     const today = new Date();
@@ -106,13 +106,13 @@ export const getWhitelistStats = async (req: Request, res: Response) => {
 
     const total = await Whitelist.count({ where: dateFilter });
     const validated = await Whitelist.count({
-      where: { ...dateFilter, status: 'validated' },
+      where: { ...dateFilter, status: 'validée' },
     });
     const refused = await Whitelist.count({
-      where: { ...dateFilter, status: 'refused' },
+      where: { ...dateFilter, status: 'refusée' },
     });
     const pending = await Whitelist.count({
-      where: { ...dateFilter, status: 'pending' },
+      where: { ...dateFilter, status: 'en_attente' },
     });
 
     return res.json({

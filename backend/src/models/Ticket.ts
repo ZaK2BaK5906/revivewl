@@ -59,6 +59,8 @@ Ticket.init(
     sequelize,
     tableName: 'tickets',
     timestamps: true,
+    createdAt: 'created_at',
+    updatedAt: 'updated_at',
   }
 );
 
@@ -99,6 +101,8 @@ TicketComment.init(
     sequelize,
     tableName: 'ticket_comments',
     timestamps: true,
+    createdAt: 'created_at',
+    updatedAt: 'updated_at',
   }
 );
 

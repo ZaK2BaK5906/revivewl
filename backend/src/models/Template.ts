@@ -45,6 +45,8 @@ Scenario.init(
     sequelize,
     tableName: 'scenarios',
     timestamps: true,
+    createdAt: 'created_at',
+    updatedAt: 'updated_at',
   }
 );
 
@@ -82,6 +84,8 @@ RuleQuestion.init(
     sequelize,
     tableName: 'rule_questions',
     timestamps: true,
+    createdAt: 'created_at',
+    updatedAt: 'updated_at',
   }
 );
 
@@ -119,5 +123,7 @@ LexiconQuestion.init(
     sequelize,
     tableName: 'lexicon_questions',
     timestamps: true,
+    createdAt: 'created_at',
+    updatedAt: 'updated_at',
   }
 );

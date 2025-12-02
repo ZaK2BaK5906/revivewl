@@ -39,5 +39,7 @@ ChatMessage.init(
     sequelize,
     tableName: 'chat_messages',
     timestamps: true,
+    createdAt: 'created_at',
+    updatedAt: 'updated_at',
   }
 );

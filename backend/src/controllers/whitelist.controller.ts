@@ -85,6 +85,12 @@ export const createWhitelist = async (req: Request, res: Response) => {
       });
     }
 
+    // Map category name to category_id
+    if (whitelistData.category) {
+      whitelistData.category_id = whitelistData.category === 'Legal' ? 1 : 2;
+      delete whitelistData.category;
+    }
+
     const admin = (req as any).admin;
     whitelistData.admin_id = admin.id;
 

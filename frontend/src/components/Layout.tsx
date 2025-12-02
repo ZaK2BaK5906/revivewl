@@ -153,13 +153,6 @@ const Layout = () => {
               <UserCircle className="w-4 h-4 mr-2" />
               Mon Profil
             </button>
-            <Link
-              to="/settings"
-              className="flex items-center w-full px-4 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-secondary rounded-lg mb-2 transition-colors"
-            >
-              <Settings className="w-4 h-4 mr-2" />
-              Paramètres
-            </Link>
             <button
               onClick={logout}
               className="flex items-center w-full px-4 py-2 text-sm text-red-400 hover:text-red-300 hover:bg-red-950/50 rounded-lg transition-colors"

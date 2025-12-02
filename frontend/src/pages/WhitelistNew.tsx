@@ -316,7 +316,7 @@ const WhitelistNew = () => {
             <div className="space-y-6">
               <div>
                 <label className="block text-sm font-medium text-foreground mb-2">
-                  Qu'est-ce qu'une zone safe ?
+                  Quelles sont les zones safes ?
                 </label>
                 <input
                   type="text"

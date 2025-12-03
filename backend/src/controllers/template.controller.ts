@@ -8,9 +8,19 @@ const getCategoryIdFromName = (categoryName: string): number => {
 };
 
 // Scenarios
-export const getAllScenarios = async (_req: Request, res: Response) => {
+export const getAllScenarios = async (req: Request, res: Response) => {
   try {
+    const admin = (req as any).admin;
+    const { includeInactive } = req.query;
+
+    // Only show active templates unless admin is master and explicitly requests all
+    const whereClause: any = {};
+    if (!admin.is_master || includeInactive !== 'true') {
+      whereClause.is_active = true;
+    }
+
     const scenarios = await Scenario.findAll({
+      where: whereClause,
       order: [['created_at', 'DESC']],
     });
     return res.json(scenarios);
@@ -23,6 +33,7 @@ export const getAllScenarios = async (_req: Request, res: Response) => {
 export const createScenario = async (req: Request, res: Response) => {
   try {
     const { title, description, expectedAnswer, category } = req.body;
+    const admin = (req as any).admin;
 
     // Transform frontend data to backend format
     const scenarioData = {
@@ -31,7 +42,9 @@ export const createScenario = async (req: Request, res: Response) => {
       expected_answer: expectedAnswer, // camelCase → snake_case
       category_id: category ? getCategoryIdFromName(category) : 1, // Convert name to ID
       points: 10, // Default value
-      is_active: true, // Default value
+      // Only master admins can create active templates
+      // Regular admins create inactive templates that need validation
+      is_active: admin.is_master ? true : false,
     };
 
     const scenario = await Scenario.create(scenarioData);
@@ -71,6 +84,13 @@ export const updateScenario = async (req: Request, res: Response) => {
 export const deleteScenario = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
+    const admin = (req as any).admin;
+
+    // Only master admins can delete templates
+    if (!admin.is_master) {
+      return res.status(403).json({ error: 'Only master admins can delete templates' });
+    }
+
     const scenario = await Scenario.findByPk(id);
 
     if (!scenario) {
@@ -85,10 +105,44 @@ export const deleteScenario = async (req: Request, res: Response) => {
   }
 };
 
-// Rule Questions
-export const getAllRuleQuestions = async (_req: Request, res: Response) => {
+// Validate (activate) a scenario - Master Admin only
+export const validateScenario = async (req: Request, res: Response) => {
   try {
+    const { id } = req.params;
+    const admin = (req as any).admin;
+
+    if (!admin.is_master) {
+      return res.status(403).json({ error: 'Only master admins can validate templates' });
+    }
+
+    const scenario = await Scenario.findByPk(id);
+
+    if (!scenario) {
+      return res.status(404).json({ error: 'Scenario not found' });
+    }
+
+    await scenario.update({ is_active: true });
+    return res.json(scenario);
+  } catch (error: any) {
+    console.error('Error validating scenario:', error);
+    return res.status(500).json({ error: 'Failed to validate scenario' });
+  }
+};
+
+// Rule Questions
+export const getAllRuleQuestions = async (req: Request, res: Response) => {
+  try {
+    const admin = (req as any).admin;
+    const { includeInactive } = req.query;
+
+    // Only show active templates unless admin is master and explicitly requests all
+    const whereClause: any = {};
+    if (!admin.is_master || includeInactive !== 'true') {
+      whereClause.is_active = true;
+    }
+
     const questions = await RuleQuestion.findAll({
+      where: whereClause,
       order: [['created_at', 'DESC']],
     });
     return res.json(questions);
@@ -101,6 +155,7 @@ export const getAllRuleQuestions = async (_req: Request, res: Response) => {
 export const createRuleQuestion = async (req: Request, res: Response) => {
   try {
     const { question, answer, points, category } = req.body;
+    const admin = (req as any).admin;
 
     // Transform frontend data to backend format
     const questionData = {
@@ -108,7 +163,8 @@ export const createRuleQuestion = async (req: Request, res: Response) => {
       correct_answer: answer, // 'answer' → 'correct_answer'
       category_id: category ? getCategoryIdFromName(category) : null,
       points: points || 5,
-      is_active: true,
+      // Only master admins can create active templates
+      is_active: admin.is_master ? true : false,
     };
 
     const ruleQuestion = await RuleQuestion.create(questionData);
@@ -147,6 +203,13 @@ export const updateRuleQuestion = async (req: Request, res: Response) => {
 export const deleteRuleQuestion = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
+    const admin = (req as any).admin;
+
+    // Only master admins can delete templates
+    if (!admin.is_master) {
+      return res.status(403).json({ error: 'Only master admins can delete templates' });
+    }
+
     const question = await RuleQuestion.findByPk(id);
 
     if (!question) {
@@ -161,10 +224,44 @@ export const deleteRuleQuestion = async (req: Request, res: Response) => {
   }
 };
 
-// Lexicon Questions
-export const getAllLexiconQuestions = async (_req: Request, res: Response) => {
+// Validate (activate) a rule question - Master Admin only
+export const validateRuleQuestion = async (req: Request, res: Response) => {
   try {
+    const { id } = req.params;
+    const admin = (req as any).admin;
+
+    if (!admin.is_master) {
+      return res.status(403).json({ error: 'Only master admins can validate templates' });
+    }
+
+    const question = await RuleQuestion.findByPk(id);
+
+    if (!question) {
+      return res.status(404).json({ error: 'Rule question not found' });
+    }
+
+    await question.update({ is_active: true });
+    return res.json(question);
+  } catch (error: any) {
+    console.error('Error validating rule question:', error);
+    return res.status(500).json({ error: 'Failed to validate rule question' });
+  }
+};
+
+// Lexicon Questions
+export const getAllLexiconQuestions = async (req: Request, res: Response) => {
+  try {
+    const admin = (req as any).admin;
+    const { includeInactive } = req.query;
+
+    // Only show active templates unless admin is master and explicitly requests all
+    const whereClause: any = {};
+    if (!admin.is_master || includeInactive !== 'true') {
+      whereClause.is_active = true;
+    }
+
     const questions = await LexiconQuestion.findAll({
+      where: whereClause,
       order: [['created_at', 'DESC']],
     });
     return res.json(questions);
@@ -177,6 +274,7 @@ export const getAllLexiconQuestions = async (_req: Request, res: Response) => {
 export const createLexiconQuestion = async (req: Request, res: Response) => {
   try {
     const { question, answer, points, category } = req.body;
+    const admin = (req as any).admin;
 
     // Transform frontend data to backend format
     const questionData = {
@@ -184,7 +282,8 @@ export const createLexiconQuestion = async (req: Request, res: Response) => {
       correct_answer: answer, // 'answer' → 'correct_answer'
       category_id: category ? getCategoryIdFromName(category) : null,
       points: points || 5,
-      is_active: true,
+      // Only master admins can create active templates
+      is_active: admin.is_master ? true : false,
     };
 
     const lexiconQuestion = await LexiconQuestion.create(questionData);
@@ -223,6 +322,13 @@ export const updateLexiconQuestion = async (req: Request, res: Response) => {
 export const deleteLexiconQuestion = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
+    const admin = (req as any).admin;
+
+    // Only master admins can delete templates
+    if (!admin.is_master) {
+      return res.status(403).json({ error: 'Only master admins can delete templates' });
+    }
+
     const question = await LexiconQuestion.findByPk(id);
 
     if (!question) {
@@ -234,5 +340,29 @@ export const deleteLexiconQuestion = async (req: Request, res: Response) => {
   } catch (error: any) {
     console.error('Error deleting lexicon question:', error);
     return res.status(500).json({ error: 'Failed to delete lexicon question' });
+  }
+};
+
+// Validate (activate) a lexicon question - Master Admin only
+export const validateLexiconQuestion = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const admin = (req as any).admin;
+
+    if (!admin.is_master) {
+      return res.status(403).json({ error: 'Only master admins can validate templates' });
+    }
+
+    const question = await LexiconQuestion.findByPk(id);
+
+    if (!question) {
+      return res.status(404).json({ error: 'Lexicon question not found' });
+    }
+
+    await question.update({ is_active: true });
+    return res.json(question);
+  } catch (error: any) {
+    console.error('Error validating lexicon question:', error);
+    return res.status(500).json({ error: 'Failed to validate lexicon question' });
   }
 };

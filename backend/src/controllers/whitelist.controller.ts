@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import Whitelist from '../models/Whitelist';
+import { WlScenarioAnswer, WlRuleAnswer, WlLexiconAnswer, WlFixedAnswer } from '../models/WhitelistAnswers';
 
 // Mapping from frontend field names (camelCase) to database column names (snake_case)
 const fieldMapping: { [key: string]: string } = {
@@ -75,10 +76,27 @@ export const getWhitelistById = async (req: Request, res: Response) => {
 
 export const createWhitelist = async (req: Request, res: Response) => {
   try {
-    const whitelistData = req.body;
+    const {
+      candidate_firstname,
+      candidate_lastname,
+      discord_username,
+      age,
+      experience_level,
+      rp_hours,
+      category,
+      admin_notes,
+      total_score,
+      scenario_score,
+      questions_score,
+      // Answers data
+      scenarios,
+      ruleQuestions,
+      lexiconQuestions,
+      fixedAnswers,
+    } = req.body;
 
     // Age validation
-    if (whitelistData.age < 18) {
+    if (age < 18) {
       return res.status(400).json({
         error: 'Age minimum requis : 18 ans',
         auto_refuse: true,
@@ -86,15 +104,100 @@ export const createWhitelist = async (req: Request, res: Response) => {
     }
 
     // Map category name to category_id
-    if (whitelistData.category) {
-      whitelistData.category_id = whitelistData.category === 'Legal' ? 1 : 2;
-      delete whitelistData.category;
-    }
+    const category_id = category === 'Legal' ? 1 : 2;
 
     const admin = (req as any).admin;
-    whitelistData.admin_id = admin.id;
+
+    // Create whitelist
+    const whitelistData = {
+      candidate_firstname,
+      candidate_lastname,
+      discord_username,
+      age,
+      experience_level,
+      rp_hours: rp_hours || 0,
+      category_id,
+      admin_id: admin.id,
+      admin_notes,
+      total_score: total_score || 0,
+      scenario_score: scenario_score || 0,
+      questions_score: questions_score || 0,
+    };
 
     const whitelist = await Whitelist.create(whitelistData);
+
+    // Save scenario answers if provided
+    if (scenarios && Array.isArray(scenarios)) {
+      for (const scenario of scenarios) {
+        if (scenario.answer && scenario.answer.trim() !== '') {
+          await WlScenarioAnswer.create({
+            whitelist_id: whitelist.id,
+            scenario_id: scenario.id,
+            answer: scenario.answer,
+            is_validated: scenario.validated || false,
+            score: scenario.score || 0,
+          });
+        }
+      }
+    }
+
+    // Save rule question answers if provided
+    if (ruleQuestions && Array.isArray(ruleQuestions)) {
+      for (let i = 0; i < ruleQuestions.length; i++) {
+        const question = ruleQuestions[i];
+        if (question.answer && question.answer.trim() !== '') {
+          await WlRuleAnswer.create({
+            whitelist_id: whitelist.id,
+            question_id: i + 1, // Assuming question IDs are sequential starting from 1
+            answer: question.answer,
+            is_correct: question.correct || false,
+            score: question.correct ? 5 : 0,
+          });
+        }
+      }
+    }
+
+    // Save lexicon question answers if provided
+    if (lexiconQuestions && Array.isArray(lexiconQuestions)) {
+      for (let i = 0; i < lexiconQuestions.length; i++) {
+        const question = lexiconQuestions[i];
+        if (question.answer && question.answer.trim() !== '') {
+          await WlLexiconAnswer.create({
+            whitelist_id: whitelist.id,
+            question_id: i + 1, // Assuming question IDs are sequential starting from 1
+            answer: question.answer,
+            is_correct: question.correct || false,
+            score: question.correct ? 5 : 0,
+          });
+        }
+      }
+    }
+
+    // Save fixed answers if provided
+    if (fixedAnswers) {
+      if (fixedAnswers.zoneSafe && fixedAnswers.zoneSafe.trim() !== '') {
+        await WlFixedAnswer.create({
+          whitelist_id: whitelist.id,
+          question_type: 'zone_safe',
+          answer: fixedAnswers.zoneSafe,
+        });
+      }
+      if (fixedAnswers.passwordHidden && fixedAnswers.passwordHidden.trim() !== '') {
+        await WlFixedAnswer.create({
+          whitelist_id: whitelist.id,
+          question_type: 'password_hidden',
+          answer: fixedAnswers.passwordHidden,
+        });
+      }
+      if (fixedAnswers.safeWord && fixedAnswers.safeWord.trim() !== '') {
+        await WlFixedAnswer.create({
+          whitelist_id: whitelist.id,
+          question_type: 'safe_word',
+          answer: fixedAnswers.safeWord,
+        });
+      }
+    }
+
     return res.status(201).json(whitelist);
   } catch (error: any) {
     console.error('Error creating whitelist:', error);

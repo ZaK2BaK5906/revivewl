@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   TrendingUp,
   Users,
@@ -10,48 +10,75 @@ import {
   Award,
   BarChart3,
 } from 'lucide-react';
+import { statsAPI } from '../services/api';
 
 const Statistics = () => {
   const [period, setPeriod] = useState<'today' | 'week' | 'month' | 'year'>('week');
+  const [loading, setLoading] = useState(true);
+  const [stats, setStats] = useState<any>({
+    today: { total: 0, validated: 0, refused: 0, pending: 0, avgScore: 0, avgDuration: 0 },
+    week: { total: 0, validated: 0, refused: 0, pending: 0, avgScore: 0, avgDuration: 0 },
+    month: { total: 0, validated: 0, refused: 0, pending: 0, avgScore: 0, avgDuration: 0 },
+    year: { total: 0, validated: 0, refused: 0, pending: 0, avgScore: 0, avgDuration: 0 },
+  });
 
-  // Mock data for statistics
-  const stats = {
-    today: {
-      total: 5,
-      validated: 3,
-      refused: 1,
-      pending: 1,
-      avgScore: 78,
-      avgDuration: 23,
-    },
-    week: {
-      total: 32,
-      validated: 21,
-      refused: 7,
-      pending: 4,
-      avgScore: 75,
-      avgDuration: 25,
-    },
-    month: {
-      total: 128,
-      validated: 85,
-      refused: 28,
-      pending: 15,
-      avgScore: 76,
-      avgDuration: 24,
-    },
-    year: {
-      total: 1456,
-      validated: 982,
-      refused: 321,
-      pending: 153,
-      avgScore: 74,
-      avgDuration: 26,
-    },
-  };
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        setLoading(true);
+        const [todayData, weekData, monthData, yearData] = await Promise.all([
+          statsAPI.getWhitelistStats('today'),
+          statsAPI.getWhitelistStats('week'),
+          statsAPI.getWhitelistStats('month'),
+          statsAPI.getWhitelistStats('year'),
+        ]);
+
+        setStats({
+          today: {
+            total: todayData.data.total || 0,
+            validated: todayData.data.validated || 0,
+            refused: todayData.data.refused || 0,
+            pending: todayData.data.pending || 0,
+            avgScore: 75, // Placeholder for now
+            avgDuration: 25, // Placeholder for now
+          },
+          week: {
+            total: weekData.data.total || 0,
+            validated: weekData.data.validated || 0,
+            refused: weekData.data.refused || 0,
+            pending: weekData.data.pending || 0,
+            avgScore: 75, // Placeholder for now
+            avgDuration: 25, // Placeholder for now
+          },
+          month: {
+            total: monthData.data.total || 0,
+            validated: monthData.data.validated || 0,
+            refused: monthData.data.refused || 0,
+            pending: monthData.data.pending || 0,
+            avgScore: 76, // Placeholder for now
+            avgDuration: 24, // Placeholder for now
+          },
+          year: {
+            total: yearData.data.total || 0,
+            validated: yearData.data.validated || 0,
+            refused: yearData.data.refused || 0,
+            pending: yearData.data.pending || 0,
+            avgScore: 74, // Placeholder for now
+            avgDuration: 26, // Placeholder for now
+          },
+        });
+      } catch (error) {
+        console.error('Error fetching statistics:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchStats();
+  }, []);
 
   const currentStats = stats[period];
-  const successRate = ((currentStats.validated / currentStats.total) * 100).toFixed(1);
+  const successRate = currentStats.total > 0 ? ((currentStats.validated / currentStats.total) * 100).toFixed(1) : '0';
 
   // Mock data for trends
   const weeklyTrends = [

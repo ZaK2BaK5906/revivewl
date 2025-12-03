@@ -73,7 +73,11 @@ const WhitelistNew = () => {
     try {
       setSubmitting(true);
 
-      // Create whitelist first
+      const scenarioScore = formData.scenarios.filter(s => s.validated).length * 10;
+      const ruleScore = formData.ruleQuestions.filter(q => q.correct).length * 5;
+      const lexiconScore = formData.lexiconQuestions.filter(q => q.correct).length * 5;
+
+      // Create whitelist with all answers
       const whitelistData = {
         candidate_firstname: formData.firstname,
         candidate_lastname: formData.lastname,
@@ -84,6 +88,13 @@ const WhitelistNew = () => {
         category: formData.category,
         admin_notes: formData.adminNotes,
         total_score: calculateScore(),
+        scenario_score: scenarioScore,
+        questions_score: ruleScore + lexiconScore,
+        // Include all answers
+        scenarios: formData.scenarios,
+        ruleQuestions: formData.ruleQuestions,
+        lexiconQuestions: formData.lexiconQuestions,
+        fixedAnswers: formData.fixedAnswers,
       };
 
       const response = await whitelistAPI.create(whitelistData);
@@ -112,7 +123,11 @@ const WhitelistNew = () => {
     try {
       setSubmitting(true);
 
-      // Create whitelist first
+      const scenarioScore = formData.scenarios.filter(s => s.validated).length * 10;
+      const ruleScore = formData.ruleQuestions.filter(q => q.correct).length * 5;
+      const lexiconScore = formData.lexiconQuestions.filter(q => q.correct).length * 5;
+
+      // Create whitelist with all answers
       const whitelistData = {
         candidate_firstname: formData.firstname,
         candidate_lastname: formData.lastname,
@@ -123,6 +138,13 @@ const WhitelistNew = () => {
         category: formData.category,
         admin_notes: formData.adminNotes,
         total_score: calculateScore(),
+        scenario_score: scenarioScore,
+        questions_score: ruleScore + lexiconScore,
+        // Include all answers
+        scenarios: formData.scenarios,
+        ruleQuestions: formData.ruleQuestions,
+        lexiconQuestions: formData.lexiconQuestions,
+        fixedAnswers: formData.fixedAnswers,
       };
 
       const response = await whitelistAPI.create(whitelistData);

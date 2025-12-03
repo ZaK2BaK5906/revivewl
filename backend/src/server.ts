@@ -14,6 +14,7 @@ import adminRoutes from './routes/admin.routes';
 import ticketRoutes from './routes/ticket.routes';
 import chatRoutes from './routes/chat.routes';
 import statsRoutes from './routes/stats.routes';
+import webhookRoutes from './routes/webhook.routes';
 
 dotenv.config();
 
@@ -47,6 +48,7 @@ app.use('/api/admins', adminRoutes);
 app.use('/api/tickets', ticketRoutes);
 app.use('/api/chat', chatRoutes);
 app.use('/api/stats', statsRoutes);
+app.use('/api/webhooks', webhookRoutes);
 
 // Health check
 app.get('/health', (_req, res) => {

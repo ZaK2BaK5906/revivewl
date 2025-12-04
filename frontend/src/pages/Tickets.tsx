@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { ticketAPI } from '../services/api';
 import toast from 'react-hot-toast';
+import TicketDetailModal from '../components/TicketDetailModal';
 
 interface Ticket {
   id: number;
@@ -35,6 +36,8 @@ const Tickets = () => {
   const [isCreating, setIsCreating] = useState(false);
   const [loading, setLoading] = useState(true);
   const [tickets, setTickets] = useState<Ticket[]>([]);
+  const [selectedTicketId, setSelectedTicketId] = useState<number | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   useEffect(() => {
     fetchTickets();
@@ -341,6 +344,10 @@ const Tickets = () => {
         {filteredTickets.map((ticket) => (
           <div
             key={ticket.id}
+            onClick={() => {
+              setSelectedTicketId(ticket.id);
+              setIsModalOpen(true);
+            }}
             className="bg-card border border-border rounded-xl p-6 hover:border-primary/50 transition-colors cursor-pointer"
           >
             <div className="flex items-start justify-between mb-4">
@@ -389,6 +396,19 @@ const Tickets = () => {
           <AlertCircle className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
           <p className="text-muted-foreground">Aucun ticket trouvé</p>
         </div>
+      )}
+
+      {/* Ticket Detail Modal */}
+      {selectedTicketId && (
+        <TicketDetailModal
+          ticketId={selectedTicketId}
+          isOpen={isModalOpen}
+          onClose={() => {
+            setIsModalOpen(false);
+            setSelectedTicketId(null);
+          }}
+          onUpdate={fetchTickets}
+        />
       )}
     </div>
   );

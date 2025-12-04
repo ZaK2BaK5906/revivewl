@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import Whitelist from '../models/Whitelist';
 import { WlScenarioAnswer, WlRuleAnswer, WlLexiconAnswer, WlFixedAnswer } from '../models/WhitelistAnswers';
+import { triggerWebhook } from './webhook.controller';
 
 // Mapping from frontend field names (camelCase) to database column names (snake_case)
 const fieldMapping: { [key: string]: string } = {
@@ -61,7 +62,26 @@ export const getAllWhitelists = async (req: Request, res: Response) => {
 export const getWhitelistById = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const whitelist = await Whitelist.findByPk(id);
+    const whitelist = await Whitelist.findByPk(id, {
+      include: [
+        {
+          model: WlScenarioAnswer,
+          as: 'scenarioAnswers',
+        },
+        {
+          model: WlRuleAnswer,
+          as: 'ruleAnswers',
+        },
+        {
+          model: WlLexiconAnswer,
+          as: 'lexiconAnswers',
+        },
+        {
+          model: WlFixedAnswer,
+          as: 'fixedAnswers',
+        },
+      ],
+    });
 
     if (!whitelist) {
       return res.status(404).json({ error: 'Whitelist not found' });
@@ -198,6 +218,14 @@ export const createWhitelist = async (req: Request, res: Response) => {
       }
     }
 
+    // Trigger webhook for whitelist creation
+    triggerWebhook('wl_created', {
+      candidate_firstname: whitelist.candidate_firstname,
+      candidate_lastname: whitelist.candidate_lastname,
+      discord_username: whitelist.discord_username,
+      age: whitelist.age,
+    });
+
     return res.status(201).json(whitelist);
   } catch (error: any) {
     console.error('Error creating whitelist:', error);
@@ -258,6 +286,15 @@ export const validateWhitelist = async (req: Request, res: Response) => {
       validation_comment: validationComment || '',
     });
 
+    // Trigger webhook for whitelist validation
+    triggerWebhook('wl_validated', {
+      candidate_firstname: whitelist.candidate_firstname,
+      candidate_lastname: whitelist.candidate_lastname,
+      discord_username: whitelist.discord_username,
+      category: whitelist.category_id === 1 ? 'Legal' : 'Illégal',
+      total_score: whitelist.total_score,
+    });
+
     return res.json(whitelist);
   } catch (error: any) {
     console.error('Error validating whitelist:', error);
@@ -285,6 +322,14 @@ export const refuseWhitelist = async (req: Request, res: Response) => {
     await whitelist.update({
       status: 'refusée',
       final_decision: 'refusée',
+      refusal_reason: refusalReason,
+    });
+
+    // Trigger webhook for whitelist refusal
+    triggerWebhook('wl_refused', {
+      candidate_firstname: whitelist.candidate_firstname,
+      candidate_lastname: whitelist.candidate_lastname,
+      discord_username: whitelist.discord_username,
       refusal_reason: refusalReason,
     });
 
